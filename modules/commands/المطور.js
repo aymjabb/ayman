@@ -65,7 +65,7 @@ module.exports.config = {
   credits: "SOMI",
   description: "👑 معلومات مطور + شعر مزخرف بدرجة أسطورية",
   commandCategory: "معلومات",
-  usages: "المطور",
+  usages: ".المطور",
   cooldowns: 5
 };
 
