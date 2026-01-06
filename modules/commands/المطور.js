@@ -2,7 +2,7 @@ const axios = require("axios");
 const fs = require("fs-extra");
 const path = require("path");
 
-// مصفوفة القصائد مع زخارف متقدمة لكل بيتين
+// مصفوفة القصائد بدون زخارف بين الحروف
 const poems = [
   {
     poet: "المتنبي",
@@ -48,22 +48,27 @@ const poems = [
   }
 ];
 
-// دالة لتطبيق زخرفة متقدمة على الحروف
-function decorateLine(line) {
-  // زخرفة متقدمة: حروف ممتدة + نجوم وفواصل
-  return line.split("").map(char => {
-    if (char === " ") return "   "; // مسافة أوسع
-    const symbols = ["★","☆","✦","✧","✵","✺","✪"];
-    return char + symbols[Math.floor(Math.random() * symbols.length)] + "ــ";
+// دالة لتطبيق تباعد ASCII على الشعر
+function asciiSpacing(line) {
+  return line.split("").join("  "); // تباعد مزدوج بين الحروف
+}
+
+// دالة زخرفة عبارة "تعلمت على يد anas"
+function decorateLearning() {
+  const text = "تعلمت على يد anas";
+  const symbols = ["═","║","╔","╗","╚","╝","─","•"];
+  return text.split("").map(c => {
+    if (c === " ") return "   ";
+    return symbols[Math.floor(Math.random()*symbols.length)] + c;
   }).join("");
 }
 
 module.exports.config = {
   name: "المطور",
-  version: "5.2.0",
+  version: "5.4.0",
   hasPermssion: 0,
   credits: "SOMI",
-  description: "👑 معلومات مطور + شعر مزخرف بدرجة أسطورية",
+  description: "👑 معلومات مطور + شعر ASCII مزخرف",
   commandCategory: "معلومات",
   usages: ".المطور",
   cooldowns: 5
@@ -83,13 +88,16 @@ module.exports.run = async function ({ api, event }) {
     // اختيار قصيدة عشوائية
     const randomPoem = poems[Math.floor(Math.random() * poems.length)];
 
-    // زخرفة النص
-    let poemText = `╭─────── ✦🌌✦ ───────╮\n`;
+    // الشعر مع تباعد ASCII
+    let poemText = `╭─────── 🌌 ───────╮\n`;
     poemText += `👑 شاعر: ${randomPoem.poet}\n\n`;
     randomPoem.lines.forEach(line => {
-      poemText += `☁️ ${decorateLine(line)}\n`;
+      poemText += `☁️ ${asciiSpacing(line)}\n`;
     });
-    poemText += `╰─────── ✦🌌✦ ───────╯\n`;
+    poemText += `╰─────── 🌌 ───────╯\n`;
+
+    // زخرفة عبارة "تعلمت على يد anas"
+    const learningText = decorateLearning();
 
     // رسالة كاملة
     const msg = `
@@ -120,6 +128,8 @@ ${poemText}
 🔥┃ 𝗔𝗻𝗶𝗺𝗲 • 𝗛𝗮𝗰𝗸𝗲𝗿 • 𝗩𝗜𝗣
 
 ✨ 「 أغمِض عينيك… فالجمال يُرى بالقلب قبل البصر 」 ✨
+
+${learningText}
 `;
 
     return api.sendMessage(
