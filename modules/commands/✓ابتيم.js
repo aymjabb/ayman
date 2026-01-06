@@ -1,11 +1,11 @@
 module.exports.config = {
-  name: "ابتيم",
-  version: "1.0.0",
+  name: "ابتايم",
+  version: "2.0.0",
   hasPermssion: 0,
-  credits: "Mustapha",
-  description: "عرض معلومات السيرفر",
+  credits: "Mustapha • مزخرف من قبل سيرا تشان",
+  description: "عرض معلومات السيرفر بأسلوب أسطوري ومزخرف 😻✨",
   commandCategory: "النظام",
-  usages: "ابتيم",
+  usages: ".ابتايم",
   cooldowns: 3
 };
 
@@ -13,39 +13,57 @@ module.exports.run = async function ({ api, event }) {
   const os = require("os");
   const moment = require("moment-timezone");
 
+  // مدة التشغيل
   const uptime = process.uptime();
   const hours = Math.floor(uptime / 3600);
   const minutes = Math.floor((uptime % 3600) / 60);
   const seconds = Math.floor(uptime % 60);
 
+  // الذاكرة
   const totalMem = (os.totalmem() / 1024 / 1024).toFixed(0);
   const freeMem = (os.freemem() / 1024 / 1024).toFixed(0);
   const usedMem = totalMem - freeMem;
   const memUsage = ((usedMem / totalMem) * 100).toFixed(0);
 
+  // المعالج ونظام التشغيل
   const cpuModel = os.cpus()[0].model;
   const cpuCores = os.cpus().length;
   const osType = `${os.type()} ${os.release()}`;
   const currentTime = moment.tz("Africa/Algiers").format("YYYY-MM-DD | HH:mm:ss");
 
+  // زخارف وإيموجيات
+  const deco = ["✨","💖","🌸","🌟","💫","😻","🔥","🌀","🎇","🌈"];
+  const randomDeco = () => deco[Math.floor(Math.random() * deco.length)];
+  const spark = () => Array.from({length:3},()=>randomDeco()).join("");
+
+  // رسائل إضافية حسب حالة الرام
+  let ramComment = "";
+  if (memUsage > 80) ramComment = `😱 واو! الرام مشغول كثير ${spark()}`;
+  else if (memUsage > 50) ramComment = `⚡ السيرفر نشيط ${spark()}`;
+  else ramComment = `💖 السيرفر هادي مسترخي ${spark()}`;
+
   const message = `
-== 📊 بيانات السيرفر 📊 ==
+🌟✨💖 سيرا تشان تقول: مرحبًا! 💖✨🌟
 
-⏳ مدة تشغيل البوت: ${hours} ساعة ${minutes} دقيقة ${seconds} ثانية ✅
+🌈📊 === بيانات السيرفر الأسطورية === 📊🌈
 
-🖥️ نظام التشغيل: ${osType} ✅
+⏳ مدة تشغيل البوت: ${hours} ساعة ${minutes} دقيقة ${seconds} ثانية ${spark()}
 
-🧠 عدد الأنوية: ${cpuCores} ✅
+🖥️ نظام التشغيل: ${osType} ${spark()}
 
-⚙️ نوع المعالج: ${cpuModel} ✅
+🧠 عدد الأنوية: ${cpuCores} ${spark()}
 
-💾 ذاكرة كلية: ${totalMem} MB ✅
+⚙️ نوع المعالج: ${cpuModel} ${spark()}
 
-📉 ذاكرة متاحة: ${freeMem} MB ✅
+💾 ذاكرة كلية: ${totalMem} MB ${spark()}
 
-📊 استهلاك الرام: ${memUsage}% ✅
+📉 ذاكرة متاحة: ${freeMem} MB ${spark()}
 
-🕰️ الوقت الحالي: ${currentTime} ✅
+📊 استهلاك الرام: ${memUsage}% ${spark()} ${ramComment}
+
+🕰️ الوقت الحالي: ${currentTime} ⏰ ${spark()}
+
+💫✨🌸 "سيرا تشان ترقب كل شيء!" 🌸✨💫
 `;
 
   api.sendMessage(message, event.threadID, event.messageID);
