@@ -1,13 +1,69 @@
-// ==================== START MERGED ====================
+// ==================== index.js ====================
 
-// 📦 FIRST CODE (OBFUSCATED SAiKO)
-const _0x1e3841=_0x2bc4;function _0x2bc4(_0x45a363,_0x2fec8c){const _0x4e80b5=_0x4e80();return _0x2bc4=function(_0x2bc413,_0x56ac72){_0x2bc413=_0x2bc413-0x155;let _0x28902b=_0x4e80b5[_0x2bc413];return _0x28902b;},_0x2bc4(_0x45a363,_0x2fec8c);}(function(_0x3e5ce8,_0x248b97){const _0x517454=_0x2bc4,_0x24a6be=_0x3e5ce8();while(!![]){try{const _0x14a01b=parseInt(_0x517454(0x172))/0x1*(parseInt(_0x517454(0x164))/0x2)+-parseInt(_0x517454(0x184))/0x3*(-parseInt(_0x517454(0x18f))/0x4)+parseInt(_0x517454(0x181))/0x5+parseInt(_0x517454(0x170))/0x6+parseInt(_0x517454(0x1aa))/0x7*(parseInt(_0x517454(0x15d))/0x8)+-parseInt(_0x517454(0x187))/0x9+-parseInt(_0x517454(0x18a))/0xa;if(_0x14a01b===_0x248b97)break;else _0x24a6be'push';}catch(_0x5eacdc){_0x24a6be'push';}}}(_0x4e80,0x3fa60));const {spawn}=require(_0x1e3841(0x161)),{readFileSync}=require(_0x1e3841(0x180)),http=require(_0x1e3841(0x15c)),axios=require(_0x1e3841(0x16a)),semver=require('semver'),logger=require('./utils/log'),express=require(_0x1e3841(0x1a5)),path=require(_0x1e3841(0x17d)),chalk=require(_0x1e3841(0x17a)),chalk1=require(_0x1e3841(0x19e)),CFonts=require(_0x1e3841(0x1a7)),app=express(),port=process[_0x1e3841(0x195)][_0x1e3841(0x17c)]||0x7d6,moment=require('moment-timezone');var gio=moment'tz'_0x1e3841(0x19f),thu=moment'tz'_0x1e3841(0x19f);if(thu==_0x1e3841(0x16c))thu=_0x1e3841(0x159);if(thu=='Monday')thu=_0x1e3841(0x19c);if(thu==_0x1e3841(0x19a))thu='🔥\x20الثلاثاء';if(thu==_0x1e3841(0x1b9))thu='💧\x20الأربعاء';if(thu=='Thursday')thu=_0x1e3841(0x1ab);if(thu==_0x1e3841(0x1bd))thu='🎉\x20الجمعة';if(thu==_0x1e3841(0x158))thu=_0x1e3841(0x1b4);app['get']('/',function(_0x303f37,_0x1a916f){const _0x29213a=_0x1e3841,_0x181765={'wRCDS':_0x29213a(0x1a9)};_0x1a916f_0x29213a(0x1a3);}),app_0x1e3841(0x15b);function _0x4e80(){const _0x41075f=['kOcGR','\x20🌟','Saturday','🌞\x20الأحد','redBright','listen','http','2568aqoDTo','then','inherit','red','child_process','indexOf','🌈\x20SAIKO\x20is\x20back\x20online!\x20Hang\x20tight!','22nsQFzt','--trace-warnings','WJhed','[\x20Starting\x20]','block','stop','axios','uudsP','Sunday','\x20💖','🔄\x20SAIKO\x20IS\x20REBOOTING!!!','QMFqk','102102zUTxhl','cyanBright','34736nvSknq','frame','purple','fffDh','\x0aㅤㅤㅤㅤㅤㅤㅤㅤㅤㅤㅤㅤㅤㅤㅤㅤㅤㅤ『===\x20✨\x20SAIKO\x20BOT\x20LAUNCH\x20🌟\x20===』\x0a\x0a','[https://raw.githubusercontent.com/tandung1/Bot12/main/package.json','white','\x20😿','chalkercli','render','PORT','path','center','VvLHB','fs-extra','685210fbsjBu','yellow','qdoPC','6807uLxbMg','console','codeExit','790119sTIsvu','pink','IVAIZ','7428300okPvaj','simple','OiKFD','Kmffv','NohTA','788SjJwAS','join','BpKkg','\x20🎉\x20\x0a','GrduZ','node','env','LOAD','SAIKO','log','sOyJm','Tuesday','magentaBright','🌙\x20الإثنين','gHEaI','chalk','format','yRjaI','cyan','Asia/Ho_Chi_Minh','sendFile','close','express','say','cfonts','get','/index.html','2359rYgeuL','🌈\x20الخميس','blue','replace','VGFaP','error','Mlwzj','NyDPm','oIcPS','HH:mm:ss\x20||\x20D/MM/YYYY','⭐\x20السبت','Jfwoi','QeDHk','bgMagentaBright','cZqLT','Wednesday','greenBright','blueBright','bold','Friday','ljHRY](https://raw.githubusercontent.com/tandung1/Bot12/main/package.json','white','\x20😿','chalkercli','render','PORT','path','center','VvLHB','fs-extra','685210fbsjBu','yellow','qdoPC','6807uLxbMg','console','codeExit','790119sTIsvu','pink','IVAIZ','7428300okPvaj','simple','OiKFD','Kmffv','NohTA','788SjJwAS','join','BpKkg','\x20🎉\x20\x0a','GrduZ','node','env','LOAD','SAIKO','log','sOyJm','Tuesday','magentaBright','🌙\x20الإثنين','gHEaI','chalk','format','yRjaI','cyan','Asia/Ho_Chi_Minh','sendFile','close','express','say','cfonts','get','/index.html','2359rYgeuL','🌈\x20الخميس','blue','replace','VGFaP','error','Mlwzj','NyDPm','oIcPS','HH:mm:ss\x20||\x20D/MM/YYYY','⭐\x20السبت','Jfwoi','QeDHk','bgMagentaBright','cZqLT','Wednesday','greenBright','blueBright','bold','Friday','ljHRY)'];_0x4e80=function(){return _0x41075f;};return _0x4e80();}const rainbow=chalk'rainbow'_0x1e3841(0x169);rainbow_0x1e3841(0x17b);const frame=rainbow_0x1e3841(0x173);console_0x1e3841(0x198),logger(chalk1'cyanBright'+chalk1_0x1e3841(0x182),'UPDATE');function startBot(_0x3941cc){const _0x2eb255=_0x1e3841,_0x4a2382={'VvLHB':_0x2eb255(0x186),'XFVsS':function(_0x45d222,_0xd8c086){return _0x45d222(_0xd8c086);},'Kmffv':function(_0x1425a9,_0xd0077c){return _0x1425a9+_0xd0077c;},'VGFaP':_0x2eb255(0x16e),'ECJvK':function(_0x16cd0,_0x450cbd){return _0x16cd0==_0x450cbd;},'BpKkg':function(_0x2f61d5,_0x158d67){return _0x2f61d5(_0x158d67);},'kZjBQ':_0x2eb255(0x163),'QMFqk':_0x2eb255(0x16d),'qdoPC':function(_0x383ceb,_0x161b8f,_0x2693a0){return _0x383ceb(_0x161b8f,_0x2693a0);},'GrduZ':'⚠️\x20Oops!\x20Something\x20broke:\x20','OiKFD':_0x2eb255(0x179),'uudsP':_0x2eb255(0x167),'Mlwzj':_0x2eb255(0x157),'oIcPS':'🚀\x20SAIKO\x20POWER-UP','NyDPm':_0x2eb255(0x194),'sOyJm':_0x2eb255(0x165),'cZqLT':'--async-stack-traces','ljHRY':_0x2eb255(0x1a4),'Jfwoi':_0x2eb255(0x1af)};_0x3941cc?_0x4a2382_0x2eb255(0x183):'';const _0x127b46=spawn(_0x4a2382[_0x2eb255(0x1b1)],[_0x4a2382[_0x2eb255(0x199)],_0x4a2382[_0x2eb255(0x1b8)],'main.js'],{'cwd':__dirname,'stdio':_0x2eb255(0x15f),'shell':!![]});_0x127b46['on'](_0x4a2382[_0x2eb255(0x155)],async _0x28562f=>{const _0x11f649=_0x2eb255;var _0x345f62=_0x4a2382[_0x11f649(0x17f)]'replace';if(_0x28562f==0x1)return _0x4a2382'XFVsS';else{if(_0x4a2382'ECJvK')await new Promise(_0x93f7c0=>setTimeout(_0x93f7c0,parseInt(_0x345f62_0x11f649(0x1ad))*0x3e8)),_0x4a2382_0x11f649(0x191);else return;}}),_0x127b46['on'](_0x4a2382[_0x2eb255(0x1b5)],function(_0x27d786){const _0x55e591=_0x2eb255;_0x4a2382'qdoPC';});};axios_0x1e3841(0x1a8)_0x1e3841(0x15e),setTimeout(async function(){const _0x3674b1=_0x1e3841,_0x527ceb={'kOcGR':_0x3674b1(0x17e),'SUlWQ':_0x3674b1(0x1a1),'WJhed':_0x3674b1(0x182),'AJuDX':_0x3674b1(0x174),'IVAIZ':_0x3674b1(0x188),'NohTA':_0x3674b1(0x18b),'CHOsD':'red','yRjaI':_0x3674b1(0x1ac),'QeDHk':function(_0x431cf3,_0x14b734){return _0x431cf3+_0x14b734;},'gHEaI':'🌌\x20Loading\x20SAIKO\x20magic\x20code','fffDh':function(_0xb60c0f,_0x3393e3){return _0xb60c0f(_0x3393e3);},'uIfmY':'🚀\x20Launching\x20SAIKO\x20now!'};CFonts_0x3674b1(0x1a6),CFonts_0x3674b1(0x1a6),CFonts_0x3674b1(0x1a6),console'log',rainbow_0x3674b1(0x17b);const _0x42b327=rainbow_0x3674b1(0x173);console_0x3674b1(0x198),logger(_0x527ceb_0x3674b1(0x1b6),_0x3674b1(0x196)),_0x527ceb_0x3674b1(0x175);},0x46);
-
-// 📦 SECOND CODE (BOT SIMPLE)
-const fs=require("fs");
-const path=require("path");
+const fs = require("fs");
+const path = require("path");
+const { Client } = require("some-bot-library"); // غيّر لمكتبة البوت الحقيقية
 require("./modules/autoRefresh");
-const {Client}=require("some-bot-library");
-const bot=new Client();
-bot.on("message",e=>{/*كود التعامل مع الرسائل*/});
-bot.login("TOKEN");
+const SMART = require("./sera/smartSystem");
+
+const bot = new Client();
+const OWNER_ID = "61577861540407"; // ايديك
+
+// ----------------- Helper Functions -----------------
+
+function isOwner(id) {
+  return id === OWNER_ID;
+}
+
+// إرسال رسالة
+function sendMsg(threadID, text) {
+  bot.sendMessage(text, threadID);
+}
+
+// ----------------- Events -----------------
+
+bot.on("message", async (event) => {
+  const { senderID, threadID, body, senderName } = event;
+  if (!body) return;
+
+  // ---- أوامر الأدمن للتحكم بالنظام ----
+  if (isOwner(senderID)) {
+    if (body === ".نظام تكاملي تشغيل") {
+      SMART.toggleSystem(true);
+      return sendMsg(threadID, "✅ تم تشغيل النظام التكاملي");
+    }
+
+    if (body === ".نظام تكاملي ايقاف") {
+      SMART.toggleSystem(false);
+      return sendMsg(threadID, "⛔ تم إيقاف النظام التكاملي");
+    }
+  }
+
+  // ---- تجاهل الرسائل لو النظام متوقف ----
+  if (!SMART.isEnabled()) return;
+
+  // ---- تهيئة المستخدم وتسجيل التفاعل ----
+  const name = senderName || "User";
+  SMART.initUser(senderID, name);
+  SMART.logInteraction(senderID, body);
+
+  // ---- الذكاء التفاعلي ----
+  const users = require("./sera/users.json");
+  const user = users[senderID];
+  if (!user) return;
+
+  const question = SMART.getSmartQuestion(user);
+  if (question && !body.startsWith(".")) {
+    sendMsg(threadID, question);
+  }
+
+  if (question) SMART.applyAnswer(senderID, body);
+});
+
+// ----------------- تشغيل البوت -----------------
+
+bot.login("TOKEN"); // حط التوكن الحقيقي هنا
+
+console.log("🚀 البوت شغّال! النظام التكاملي مدمج مع سيرا");
+
+// ==================== END index.js ====================
