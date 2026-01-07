@@ -1,84 +1,120 @@
-const fs = require("fs");
-
 module.exports.config = {
   name: "حماية",
-  version: "2.2.0",
+  version: "FINAL-5.0.0",
   hasPermssion: 1,
-  credits: "D-Jukie & عمر & سيرا تشان",
-  description: "حماية الكروب من التعديلات غير المصرح بها",
-  usages: ".حماية [فئة/كل]",
+  credits: "عمر & سيرا تشان 🐱",
+  description: "حماية تلقائية + أمر تحكم يدوي",
+  usages: ".حماية [تشغيل|ايقاف]",
   commandCategory: "المطور",
   cooldowns: 0
 };
 
-const DEV = ["61577861540407"];
-const PROTECT_TYPES = ["image", "name", "nickname", "wallpaper", "admin", "emoji"];
+// ===== المعرفات =====
+const OWNER_ID = "61577861540407"; // بابا 😻
+const BOT_ID   = "61586019840418"; // سيرا تشان 🐱
 
-// تفعيل الحماية
-module.exports.run = async ({ api, event, args, Threads }) => {
-  const { threadID, messageID, senderID } = event;
-  const botID = api.getCurrentUserID();
-  const threadInfo = await api.getThreadInfo(threadID);
+// ===== الحالة الافتراضية =====
+let protectionEnabled = true;
 
-  if (!threadInfo.adminIDs.some(a => a.id == senderID) && !DEV.includes(senderID))
-    return api.sendMessage("❌ أنت ما عندك صلاحية لتشغيل الحماية! 🐱‍👤", threadID, messageID);
+// ===== إيموجي =====
+const cats = ["🐱","😺","😻","😸","😾"];
+const extras = ["✨","❤️‍🔥","🐾","😂"];
 
-  if (!threadInfo.adminIDs.some(a => a.id == botID))
-    return api.sendMessage("❌ البوت بحاجة أن يكون أدمن لتفعيل الحماية ⚡", threadID, messageID);
+const mood = () =>
+  cats[Math.floor(Math.random()*cats.length)] +
+  extras[Math.floor(Math.random()*extras.length)];
 
-  if (!global.data.threadData) global.data.threadData = new Map();
-  const threadData = (await Threads.getData(threadID)).data || {};
-  if (!threadData.guard) threadData.guard = {};
+const sera = (t) => `「سيرا تشان」 ${t} ${mood()}`;
 
-  const target = args[0] ? args[0].toLowerCase() : null;
+// ===================================================
+// 🔥 أمر .حماية (تشغيل / ايقاف)
+// ===================================================
+module.exports.run = async ({ api, event, args }) => {
+  const { threadID, senderID } = event;
 
-  if (!target)
-    return api.sendMessage(`⚡ استخدم: .حماية [فئة/كل]\n💠 الفئات: ${PROTECT_TYPES.join(", ")}\n💠 كل → لتفعيل جميع الفئات`, threadID, messageID);
+  if (senderID !== OWNER_ID)
+    return api.sendMessage(sera("هذا الأمر لِبابا فقط 😾"), threadID);
 
-  if (target === "كل") {
-    PROTECT_TYPES.forEach(type => threadData.guard[type] = true);
-  } else if (!PROTECT_TYPES.includes(target)) {
-    return api.sendMessage(`❌ الفئة غير موجودة! استخدم: ${PROTECT_TYPES.join(", ")}, كل`, threadID, messageID);
-  } else {
-    threadData.guard[target] = true;
-  }
+  const action = args[0];
 
-  await Threads.setData(threadID, { data: threadData });
-  global.data.threadData.set(parseInt(threadID), threadData);
+  if (!["تشغيل","ايقاف"].includes(action))
+    return api.sendMessage(
+      sera("الاستخدام:\n.حماية تشغيل\n.حماية ايقاف"),
+      threadID
+    );
 
-  return api.sendMessage(`✅ تم تفعيل حماية فئة: ${target || "كل"} ⚡`, threadID, messageID);
+  protectionEnabled = action === "تشغيل";
+
+  return api.sendMessage(
+    sera(`تم ${action} الحماية بنجاح بابا 😻`),
+    threadID
+  );
 };
 
-// مراقبة الأحداث
+// ===================================================
+// 🛡️ الحماية التلقائية (بدون تفعيل)
+// ===================================================
 module.exports.handleEvent = async ({ api, event }) => {
-  const { threadID, senderID, logMessageType } = event;
-  const botID = api.getCurrentUserID();
-  if (!global.data.threadData) return;
-  const threadData = global.data.threadData.get(threadID);
-  if (!threadData || !threadData.guard) return;
-  if (senderID == botID || DEV.includes(senderID)) return;
+  const { threadID, logMessageType, logMessageData, senderID } = event;
 
-  const info = await api.getThreadInfo(threadID);
-  const safeIDs = info.adminIDs.map(a => a.id).concat(DEV);
+  if (!protectionEnabled) return;
 
-  if (!safeIDs.includes(senderID)) {
-    const typeMap = {
-      "log:thread-name": "name",
-      "log:thread-icon": "image",
-      "log:thread-admins": "admin",
-      "log:thread-nickname": "nickname",
-      "log:thread-wallpaper": "wallpaper",
-      "log:thread-emoji": "emoji"
-    };
-
-    const guardType = typeMap[logMessageType];
-    if (guardType && threadData.guard[guardType]) {
-      try {
-        await api.removeUserFromGroup(senderID, threadID);
-        await api.sendMessage(`😂 حاولت تعدّل شيء محمي في الكروب! سيرا تشان طلعت لك البطاقة وطردتك 🐾`, threadID);
-      } catch (e) {
-        console.error(e);
-      }
+  // ===== عند دخول سيرا تشان =====
+  if (logMessageType === "log:subscribe") {
+    const joined = logMessageData?.addedParticipants?.some(
+      u => u.userFbId == BOT_ID
+    );
+    if (joined) {
+      await api.changeAdminStatus(threadID, BOT_ID, true);
+      return api.sendMessage("ايمنننننن ✅😸❤️‍🔥", threadID);
     }
+  }
+
+  // ===== محاولة إنزال أو طرد =====
+  if (logMessageType === "log:thread-admins") {
+    const target = logMessageData?.TARGET_ID;
+    const action = logMessageData?.ADMIN_EVENT;
+
+    if (
+      action === "remove_admin" &&
+      (target === OWNER_ID || target === BOT_ID) &&
+      senderID !== OWNER_ID
+    ) {
+      try {
+        // رجوع فوري
+        await api.changeAdminStatus(threadID, OWNER_ID, true);
+        await api.changeAdminStatus(threadID, BOT_ID, true);
+
+        // إنزال المعتدي وطرده
+        await api.changeAdminStatus(threadID, senderID, false);
+        await api.removeUserFromGroup(senderID, threadID);
+
+        return api.sendMessage(
+          sera("😹 حاولت تلعب؟ القطة عضّتك وطردتك"),
+          threadID
+        );
+      } catch (e) { console.error(e); }
+    }
+  }
+};
+
+// ===================================================
+// 🐱 أمر خاص: إنزال سيرا تشان
+// ===================================================
+module.exports.handleReply = async ({ api, event }) => {
+  const { body, senderID, threadID } = event;
+
+  if (senderID !== OWNER_ID) return;
+
+  if (body === ".حبيبتي انزلي") {
+    protectionEnabled = false;
+    await api.changeAdminStatus(threadID, BOT_ID, false);
+    return api.sendMessage("😿 حاضر بابا… نزلت نفسي", threadID);
+  }
+
+  if (body === ".حبيبتي اطلعي") {
+    protectionEnabled = true;
+    await api.changeAdminStatus(threadID, BOT_ID, true);
+    return api.sendMessage("😺 رجعت أدمن بابا!", threadID);
   }
 };
