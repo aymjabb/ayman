@@ -1,146 +1,32 @@
-[
-    {
-        "key": "dbln",
-        "value": "%7B%2261585661159319%22%3A%22ZNr151Te%22%2C%2261586019840418%22%3A%22jdpbWg5E%22%7D",
-        "domain": "facebook.com",
-        "path": "/login/device-based/",
-        "hostOnly": false,
-        "creation": "2026-01-07T00:10:07.869Z",
-        "lastAccessed": "2026-01-07T00:10:07.869Z"
-    },
-    {
-        "key": "sb",
-        "value": "lkNZaeXIfQPOOZYkHSVJ3Cga",
-        "domain": "facebook.com",
-        "path": "/",
-        "hostOnly": false,
-        "creation": "2026-01-07T00:10:07.869Z",
-        "lastAccessed": "2026-01-07T00:10:07.869Z"
-    },
-    {
-        "key": "datr",
-        "value": "4y9caaJ-EK2jhrrGLUgbEbBO",
-        "domain": "facebook.com",
-        "path": "/",
-        "hostOnly": false,
-        "creation": "2026-01-07T00:10:07.869Z",
-        "lastAccessed": "2026-01-07T00:10:07.869Z"
-    },
-    {
-        "key": "ps_l",
-        "value": "1",
-        "domain": "facebook.com",
-        "path": "/",
-        "hostOnly": false,
-        "creation": "2026-01-07T00:10:07.869Z",
-        "lastAccessed": "2026-01-07T00:10:07.869Z"
-    },
-    {
-        "key": "ps_n",
-        "value": "1",
-        "domain": "facebook.com",
-        "path": "/",
-        "hostOnly": false,
-        "creation": "2026-01-07T00:10:07.869Z",
-        "lastAccessed": "2026-01-07T00:10:07.869Z"
-    },
-    {
-        "key": "locale",
-        "value": "ar_AR",
-        "domain": "facebook.com",
-        "path": "/",
-        "hostOnly": false,
-        "creation": "2026-01-07T00:10:07.869Z",
-        "lastAccessed": "2026-01-07T00:10:07.869Z"
-    },
-    {
-        "key": "vpd",
-        "value": "v1%3B778x393x2.75",
-        "domain": "facebook.com",
-        "path": "/",
-        "hostOnly": false,
-        "creation": "2026-01-07T00:10:07.869Z",
-        "lastAccessed": "2026-01-07T00:10:07.869Z"
-    },
-    {
-        "key": "pas",
-        "value": "61585661159319%3A6WLFcwXGpJ%2C61586019840418%3Ae1Llyqi9uQ",
-        "domain": "facebook.com",
-        "path": "/",
-        "hostOnly": false,
-        "creation": "2026-01-07T00:10:07.869Z",
-        "lastAccessed": "2026-01-07T00:10:07.869Z"
-    },
-    {
-        "key": "m_pixel_ratio",
-        "value": "2.75",
-        "domain": "facebook.com",
-        "path": "/",
-        "hostOnly": false,
-        "creation": "2026-01-07T00:10:07.869Z",
-        "lastAccessed": "2026-01-07T00:10:07.869Z"
-    },
-    {
-        "key": "wd",
-        "value": "393x886",
-        "domain": "facebook.com",
-        "path": "/",
-        "hostOnly": false,
-        "creation": "2026-01-07T00:10:07.869Z",
-        "lastAccessed": "2026-01-07T00:10:07.869Z"
-    },
-    {
-        "key": "ar_debug",
-        "value": "1",
-        "domain": "facebook.com",
-        "path": "/",
-        "hostOnly": false,
-        "creation": "2026-01-07T00:10:07.869Z",
-        "lastAccessed": "2026-01-07T00:10:07.869Z"
-    },
-    {
-        "key": "c_user",
-        "value": "61586019840418",
-        "domain": "facebook.com",
-        "path": "/",
-        "hostOnly": false,
-        "creation": "2026-01-07T00:10:07.869Z",
-        "lastAccessed": "2026-01-07T00:10:07.869Z"
-    },
-    {
-        "key": "xs",
-        "value": "30%3Ac_3UkhJ6oNXJ_g%3A2%3A1767744547%3A-1%3A-1",
-        "domain": "facebook.com",
-        "path": "/",
-        "hostOnly": false,
-        "creation": "2026-01-07T00:10:07.869Z",
-        "lastAccessed": "2026-01-07T00:10:07.869Z"
-    },
-    {
-        "key": "fr",
-        "value": "0h3JOIkZorj4Q5WlD.AWeYlCbo3IyHGzPji6vMmgin8SphOfhzFoTetkb-BZWhIwcWoVA.BpXC_j..AAA.0.0.BpXaQ-.AWcam5Rj3qjr22oVOyCMcKHeEtY",
-        "domain": "facebook.com",
-        "path": "/",
-        "hostOnly": false,
-        "creation": "2026-01-07T00:10:07.869Z",
-        "lastAccessed": "2026-01-07T00:10:07.869Z"
-    },
-    {
-        "key": "fbl_st",
-        "value": "100721923%3BT%3A29462409",
-        "domain": "facebook.com",
-        "path": "/",
-        "hostOnly": false,
-        "creation": "2026-01-07T00:10:07.869Z",
-        "lastAccessed": "2026-01-07T00:10:07.869Z"
-    },
-    {
-        "key": "wl_cbv",
-        "value": "v2%3Bclient_version%3A3043%3Btimestamp%3A1767744574",
-        "domain": "facebook.com",
-        "path": "/",
-        "hostOnly": false,
-        "creation": "2026-01-07T00:10:07.869Z",
-        "lastAccessed": "2026-01-07T00:10:07.869Z"
+const fs = require("fs");
+const path = require("path");
+
+module.exports.config = {
+    name: "تسونامي",
+    version: "1.0.1",
+    hasPermssion: 2,
+    credits: "Sera Chan",
+    description: "تفعيل البوت للرد والانضمام للمجموعات (خاص بالمطور)",
+    commandCategory: "system",
+    usages: ".تسونامي",
+    cooldowns: 3
+};
+
+module.exports.run = async function({ api, event }) {
+    const { threadID, messageID, senderID } = event;
+    const DEV = ["61577861540407"]; // ID المطور
+
+    if (!DEV.includes(senderID)) {
+        return api.sendMessage("❌ هذا الأمر مخصص للمطور فقط!", threadID, messageID);
     }
-]
+
+    const cacheDir = path.join(__dirname, "cache");
+    if (!fs.existsSync(cacheDir)) fs.mkdirSync(cacheDir);
+
+    const statusPath = path.join(cacheDir, "bot_control.json");
+
+    // إنشاء الملف أو تحديثه
+    fs.writeFileSync(statusPath, JSON.stringify({ active: true }, null, 2), "utf-8");
+
+    return api.sendMessage("🌊✅ تم تفعيل البوت! الآن يمكنه الرد والانضمام للمجموعات.", threadID, messageID);
+};
