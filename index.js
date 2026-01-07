@@ -1,69 +1,61 @@
-// ==================== index.js ====================
-
 const fs = require("fs");
 const path = require("path");
-const { Client } = require("some-bot-library"); // غيّر لمكتبة البوت الحقيقية
 require("./modules/autoRefresh");
-const SMART = require("./sera/smartSystem");
 
+const { Client } = require("some-bot-library");
 const bot = new Client();
-const OWNER_ID = "61577861540407"; // ايديك
 
-// ----------------- Helper Functions -----------------
+// ===== دمج الذكاء الماكر =====
+const SMART = require("./sera/smartSystem");
+const OWNER_ID = "61577861540407";
 
-function isOwner(id) {
-  return id === OWNER_ID;
-}
-
-// إرسال رسالة
-function sendMsg(threadID, text) {
-  bot.sendMessage(text, threadID);
-}
-
-// ----------------- Events -----------------
-
+// التعامل مع الرسائل
 bot.on("message", async (event) => {
   const { senderID, threadID, body, senderName } = event;
   if (!body) return;
 
-  // ---- أوامر الأدمن للتحكم بالنظام ----
-  if (isOwner(senderID)) {
+  // أوامر المطوّر فقط
+  if (senderID === OWNER_ID) {
     if (body === ".نظام تكاملي تشغيل") {
       SMART.toggleSystem(true);
-      return sendMsg(threadID, "✅ تم تشغيل النظام التكاملي");
+      return bot.sendMessage("✅ تم تشغيل النظام التكاملي", threadID);
     }
-
     if (body === ".نظام تكاملي ايقاف") {
       SMART.toggleSystem(false);
-      return sendMsg(threadID, "⛔ تم إيقاف النظام التكاملي");
+      return bot.sendMessage("⛔ تم إيقاف النظام التكاملي", threadID);
+    }
+    if (body === ".نظام تكاملي حالة") {
+      return bot.sendMessage(`🔹 النظام حالياً: ${SMART.isEnabled() ? "✅ شغال" : "⛔ متوقف"}`, threadID);
+    }
+    if (body === ".نظام تكاملي تقرير") {
+      const top = SMART.getTopUsers();
+      let msg = "🏆 أكثر الأعضاء تفاعلاً:\n";
+      top.forEach((u,i) => {
+        msg += `${i+1}. ${u.nameFB} | نقاط: ${u.points} | أموال: ${u.money}\n`;
+      });
+      return bot.sendMessage(msg, threadID);
     }
   }
 
-  // ---- تجاهل الرسائل لو النظام متوقف ----
+  // إذا النظام متوقف
   if (!SMART.isEnabled()) return;
 
-  // ---- تهيئة المستخدم وتسجيل التفاعل ----
+  // تهيئة المستخدم
   const name = senderName || "User";
   SMART.initUser(senderID, name);
+
+  // تسجيل التفاعل
   SMART.logInteraction(senderID, body);
 
-  // ---- الذكاء التفاعلي ----
+  // أسئلة ذكية
   const users = require("./sera/users.json");
   const user = users[senderID];
-  if (!user) return;
+  const q = SMART.getSmartQuestion(user);
 
-  const question = SMART.getSmartQuestion(user);
-  if (question && !body.startsWith(".")) {
-    sendMsg(threadID, question);
+  if (q && !body.startsWith(".")) {
+    return bot.sendMessage(q, threadID);
   }
-
-  if (question) SMART.applyAnswer(senderID, body);
+  if (q) SMART.applyAnswer(senderID, body);
 });
 
-// ----------------- تشغيل البوت -----------------
-
-bot.login("TOKEN"); // حط التوكن الحقيقي هنا
-
-console.log("🚀 البوت شغّال! النظام التكاملي مدمج مع سيرا");
-
-// ==================== END index.js ====================
+bot.login("TOKEN");
