@@ -1,20 +1,32 @@
 module.exports.config = {
-  name: "رست",
-  version: "1.0.2",
+  name: "ريستارت",
+  version: "1.0.0",
   hasPermssion: 2,
-  credits: "عمر",
-  description: "اعاده تشغيل البوت",
+  credits: "Sera Chan",
+  description: "إعادة تشغيل البوت",
   commandCategory: "المطور",
-  cooldowns: 5000,
-  dependencies: {
-    "eval": ""
-  }
+  usages: ".رست",
+  cooldowns: 0
 };
 
-module.exports.run = async ({ api, event, args, client, utils }) => {
-    const eval = require("eval");
-    const permission = [`61576232405796`,`61576232405796`];                  
-    if (!permission.includes(event.senderID)) return api.sendMessage("ليس لديك الصلاحية", event.threadID, event.messageID);
-    return api.sendMessage("جاري اعادة التشغيل ...⏳🕞", event.threadID, () => eval("module.exports = process.exit(1)", true), event.messageID);
+module.exports.run = async ({ api, event }) => {
+  const DEV = [
+    "61586019840418", // سيرا تشان
+    "61577861540407"  // انت
+  ];
 
-   }
+  if (!DEV.includes(event.senderID))
+    return api.sendMessage("❌ هذا الأمر للمطور فقط.", event.threadID, event.messageID);
+
+  await api.sendMessage(
+`╭━━━〔 🔁 SERA RESTART 〕━━━╮
+⚙️ جارِ إعادة تشغيل سيرا تشان…
+✨ ارجع بعد ثواني
+╰━━━━━━━━━━━━━━━━━━━━╯`,
+    event.threadID,
+    event.messageID
+  );
+
+  // ريستارت فعلي
+  process.exit(1);
+};
