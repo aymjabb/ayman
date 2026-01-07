@@ -1,11 +1,10 @@
-if (!global.SERA) {
-  global.SERA = {
-    MODE: "NORMAL", // NORMAL | DEVIL
-    OWNER: "61577861540407",
-    FEAR: {},
-    WATCH: {},
-    SILENT: {}
-  };
-}
+module.exports = {
+  MODE: "NORMAL",
+  OWNER: "61577861540407",
 
-module.exports = global.SERA;
+  WATCH: {},      // مراقبة أشخاص
+  STRIKES: {},    // مخالفات
+  SILENT: {},     // صامتين
+
+  MAX_STRIKES: 4  // بعد 4 مخالفات → إجراء
+};
