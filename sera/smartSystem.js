@@ -10,19 +10,13 @@ if (!fs.existsSync(RANK_PATH)) fs.writeJsonSync(RANK_PATH, {});
 
 let SYSTEM_ENABLED = true;
 
-// تفعيل أو إيقاف النظام
-function toggleSystem(state) {
-  SYSTEM_ENABLED = state;
-}
-function isEnabled() {
-  return SYSTEM_ENABLED;
-}
+// ===== نظام الذكاء =====
+function toggleSystem(state) { SYSTEM_ENABLED = state; }
+function isEnabled() { return SYSTEM_ENABLED; }
 
-// بيانات المستخدمين
 function getUsers() { return fs.readJsonSync(USERS_PATH); }
 function saveUsers(data) { fs.writeJsonSync(USERS_PATH, data, { spaces: 2 }); }
 
-// إنشاء مستخدم جديد
 function initUser(id, name) {
   const users = getUsers();
   if (!users[id]) {
@@ -37,21 +31,22 @@ function initUser(id, name) {
       title: "عضو جديد",
       messages: 0,
       commands: {},
-      lastAsked: 0
+      lastAsked: 0,
+      bank: 0,
+      lastReward: 0
     };
     saveUsers(users);
   }
 }
 
-// تسجيل التفاعل
 function logInteraction(id, msg, cmd = null) {
   if (!SYSTEM_ENABLED) return;
   const users = getUsers();
   const u = users[id]; if (!u) return;
 
   u.messages++;
-  u.points += 1;        // نقاط لكل رسالة
-  u.money += 2;         // أموال لكل رسالة
+  u.points += 1;
+  u.money += 2;
 
   if (cmd) u.commands[cmd] = (u.commands[cmd] || 0) + 1;
 
@@ -61,16 +56,19 @@ function logInteraction(id, msg, cmd = null) {
   if (msg.includes("برمجة")) addInterest(id, "برمجة");
   if (msg.includes("اغنية")) addInterest(id, "موسيقى");
 
+  // تحديث لقب تلقائي حسب النقاط
+  if (u.points > 100) u.title = "عضو نشيط";
+  if (u.points > 500) u.title = "عضو متميز";
+  if (u.points > 1000) u.title = "نجم الكروب";
+
   saveUsers(users);
 }
 
-// إضافة اهتمام
 function addInterest(id, interest) {
   const users = getUsers();
   if (!users[id].interests.includes(interest)) users[id].interests.push(interest);
 }
 
-// الأسئلة الذكية
 function getSmartQuestion(user) {
   if (!SYSTEM_ENABLED) return null;
   const now = Date.now();
@@ -83,7 +81,6 @@ function getSmartQuestion(user) {
   return null;
 }
 
-// تطبيق الإجابة
 function applyAnswer(id, text) {
   const users = getUsers();
   const u = users[id];
@@ -94,11 +91,40 @@ function applyAnswer(id, text) {
   saveUsers(users);
 }
 
-// تقرير كل 3 ساعات
+// ===== المكافآت اليومية =====
+function giveDailyReward() {
+  const users = getUsers();
+  const now = Date.now();
+  Object.values(users).forEach(u => {
+    if (now - (u.lastReward || 0) > 24 * 60 * 60 * 1000) {
+      const reward = Math.floor(Math.random() * 50 + 10);
+      u.money += reward;
+      u.bank += reward;
+      u.lastReward = now;
+    }
+  });
+  saveUsers(users);
+}
+
+// ===== تقرير أعلى الأعضاء =====
 function getTopUsers() {
   const users = getUsers();
   const sorted = Object.values(users).sort((a,b)=>b.points - a.points);
   return sorted.slice(0,5); // أعلى 5 أعضاء
+}
+
+// ===== ردود ذكية شخصية =====
+function getPersonalReply(id, msg) {
+  const users = getUsers();
+  const u = users[id];
+  if (!u) return "مرحباً!";
+  const lower = msg.toLowerCase();
+
+  if (lower.includes("هاي") || lower.includes("مرحبا")) return `أهلاً ${u.nameFB} 🌟`;
+  if (lower.includes("شلونك")) return `تمام الحمد لله، وانت شلونك يا ${u.nameFB}?`;
+  if (lower.includes("راحت") || lower.includes("حزين")) return "لا تحزن 😿 كلشي يصير!";
+  if (lower.includes("ضحك") || lower.includes("مضحك")) return "😂 ضحكتك مهمة!";
+  return `😎 ${u.nameFB}, ما أفهم قصدك، ممكن توضّح؟`;
 }
 
 module.exports = {
@@ -108,5 +134,7 @@ module.exports = {
   applyAnswer,
   toggleSystem,
   isEnabled,
-  getTopUsers
+  getTopUsers,
+  giveDailyReward,
+  getPersonalReply
 };
