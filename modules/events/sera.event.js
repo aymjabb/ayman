@@ -10,30 +10,33 @@ module.exports.handleEvent = async function ({ api, event }) {
     author
   } = event;
 
-  /* =========================
-     📤 تسجيل المطرودين / الخارجين
-     ========================= */
+  /* ======================
+     📤 تسجيل المطرودين/الخارجين
+     ====================== */
   if (logMessageType === "log:unsubscribe") {
     const uid = logMessageData.leftParticipantFbId;
 
+    const type =
+      author && author !== uid ? "KICK" : "LEFT";
+
     SERA.LEFT_LOG.push({
       id: uid,
+      type,
       by: author || "system",
       time: Date.now()
     });
-
     return;
   }
 
-  /* =========================
-     تجاهل الأوامر والفراغ
-     ========================= */
+  /* ======================
+     تجاهل الأوامر والمالك
+     ====================== */
   if (!body || body.startsWith(".")) return;
   if (senderID === SERA.OWNER) return;
 
-  /* =========================
-     🔇 منع الكلام إذا كان صامت
-     ========================= */
+  /* ======================
+     🔇 الصامتين
+     ====================== */
   if (SERA.SILENT[senderID]) {
     return api.sendMessage(
       SERA.MODE === "DEVIL"
@@ -43,15 +46,15 @@ module.exports.handleEvent = async function ({ api, event }) {
     );
   }
 
-  /* =========================
-     👁️ نظام المراقبة + المخالفات
-     ========================= */
+  /* ======================
+     👁️ المراقبة + المخالفات
+     ====================== */
   if (SERA.WATCH[senderID]) {
-    SERA.STRIKES[senderID] = (SERA.STRIKES[senderID] || 0) + 1;
+    SERA.STRIKES[senderID] =
+      (SERA.STRIKES[senderID] || 0) + 1;
 
     if (SERA.STRIKES[senderID] >= SERA.MAX_STRIKES) {
       SERA.SILENT[senderID] = true;
-
       return api.sendMessage(
         "☠️ تجاوزت الحد.\n🔇 تم إسكاتك.",
         threadID
@@ -64,9 +67,9 @@ module.exports.handleEvent = async function ({ api, event }) {
     );
   }
 
-  /* =========================
+  /* ======================
      👁️ وضع الرعب (30%)
-     ========================= */
+     ====================== */
   if (SERA.MODE === "DEVIL" && Math.random() < 0.3) {
     const replies = [
       "👁️ سيرا تراك.",
