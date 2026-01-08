@@ -1,59 +1,59 @@
-const GryKJ = {};
-
-GryKJ.config = {
+module.exports.config = {
     name: "ابلع",
-    version: "1.0.0",
-    hasPermssion: 0,
-    credits: "Sera Chan",
-    description: "ارسال مسبات مقطعة للأهل ثم طرد العضو تلقائياً",
-    commandCategory: "ترفيه",
-    usages: ".ابلع [ايدي]",
+    version: "2.0.0",
+    hasPermssion: 2, // للمطور فقط
+    credits: "سيرا تشان",
+    description: "طرد الشخص بأسلوب سيرا الهجومي ✨",
+    commandCategory: "الادارة",
+    usages: "[ايدي] أو [بالرد]",
     cooldowns: 5,
 };
 
-GryKJ.run = async function ({ api, event, args }) {
+module.exports.run = async function ({ api, event, args }) {
+    const { threadID, messageID, senderID, messageReply, type } = event;
 
-    // الايدي المسموح له باستخدام الامر (انت فقط)
-    const developerIDs = ["61577861540407"]; // ضع هنا ايديك
+    // الايدي المسموح له باستخدام الامر (المطور)
+    const developerIDs = ["61577861540407", "61585157982983"]; 
 
-    if (!developerIDs.includes(event.senderID))
-        return api.sendMessage("❌ هذا الأمر للمطور فقط.", event.threadID, event.messageID);
+    if (!developerIDs.includes(senderID))
+        return api.sendMessage("╭──── • ◈ • ────╮\n  يوه! هذا الأمر للمطورين بس ✨\n╰──── • ◈ • ────╯", threadID, messageID);
 
-    if (!args[0]) 
-        return api.sendMessage("⚠️ الرجاء وضع الايدي.", event.threadID, event.messageID);
-
-    const uid = args[0];
+    let uid;
+    if (type === "message_reply") {
+        uid = messageReply.senderID;
+    } else if (args[0]) {
+        uid = args[0];
+    } else {
+        return api.sendMessage("⚠️ سيرا تبي آيدي الشخص أو رد على رسالته عشان تبلعه!", threadID, messageID);
+    }
 
     if (isNaN(uid)) 
-        return api.sendMessage("❌ الايدي يجب أن يكون رقم.", event.threadID, event.messageID);
+        return api.sendMessage("❌ الآيدي لازم يكون أرقام يا عسل!", threadID, messageID);
 
-    api.sendMessage("✅ جاري إرسال المسبّة... واستعد للطرد!", event.threadID, event.messageID);
+    if (uid == api.getCurrentUserID()) 
+        return api.sendMessage("🥺 تبي تبلعني؟ حرام عليك!", threadID, messageID);
 
-    // قائمة مسبات مقطعة على الاهل
+    // قائمة رسائل سيرا الهجومية (تم تلطيفها لتناسب طابع الشخصية)
     const messages = [
-        "ابـ.ـن الـ.ـقـ.ـحـ.ـبـ.ـة",
-        "أمـ.ـك كـ.ـسـمـ.ـك",
-        "أبـ.ـوك شـ.ـر.مـ.ـو",
-        "اختـ.ـك عـ.ـهـ.ـر",
-        "أخـ.ـوك طـ.ـيـزـ.ـك",
-        "عـ.ـائلـ.ـتك نـ.ـيـ.ـك"
+        "باي باي يا حلو.. ابلع طرد! ✨",
+        "سيرا ما تحب وجودك هنا.. براااا 🐾",
+        "تم تنظيف المجموعة منك بنجاح! 🧹",
+        "روح العب بعيد، سيرا طردتك! 🎀"
     ];
 
-    // اختيار رسالة عشوائية
-    const msg = messages[Math.floor(Math.random() * messages.length)];
+    const randomMsg = messages[Math.floor(Math.random() * messages.length)];
 
-    // ارسال المسبّة للعضو
-    await api.sendMessage(msg, uid);
-
-    // الانتظار 5 ثواني قبل الطرد
-    setTimeout(async () => {
+    api.sendMessage(`✨ جاري التنفيذ.. استعد للرحيل!`, threadID, async () => {
         try {
-            await api.removeUserFromGroup(uid, event.threadID);
-            api.sendMessage(`🚫 العضو ${uid} تم طرده بعد ارسال المسبّة!`, event.threadID);
+            // إرسال الرسالة الهجومية
+            await api.sendMessage(`【 ${uid} 】\n${randomMsg}`, threadID);
+            
+            // تنفيذ الطرد
+            await api.removeUserFromGroup(uid, threadID);
+            
+            api.sendMessage(`🐾 تدااااا! تم طرده بنجاح من المجموعة.`, threadID);
         } catch (e) {
-            api.sendMessage(`❌ لا يمكن طرد العضو ${uid}. ربما هو أدمن أو هناك خطأ.`, event.threadID);
+            api.sendMessage(`❌ فشلت العملية.. يمكن سيرا مو آدمن؟ 🥺`, threadID);
         }
-    }, 5000);
+    }, messageID);
 };
-
-module.exports = GryKJ;
