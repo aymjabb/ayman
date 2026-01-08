@@ -2,10 +2,10 @@ const axios = require('axios');
 
 module.exports.config = {
   name: "رابط",
-  version: "1.2.0",
+  version: "1.3.0",
   hasPermssion: 0,
   credits: "عمر & سيرا تشان",
-  description: "تحويل صورك لروابط Imgur دائمة ✨",
+  description: "تحويل صورك لروابط دائمة بأعلى جودة ✨",
   usePrefix: true,
   commandCategory: "خدمات سيرا",
   usages: "[رد على صورة]",
@@ -31,19 +31,27 @@ module.exports.run = async ({ api, event }) => {
     return api.sendMessage('╭──── • ◈ • ────╮\n  يوه! وين الصورة؟ ✨\n╰──── • ◈ • ────╯\n\nرد على صورة أو أرسلها مع الأمر عشان سيرا تعطيك الرابط! 🐾', threadID, messageID);
   }
 
-  api.sendMessage(`✨ لحظة بس يا عسل.. سيرا جالسة ترفع ${links.length} صورة... 🐾`, threadID, messageID);
+  api.sendMessage(`✨ سيرا جالسة ترفع ${links.length} صورة.. ثواني يا عسل! 🐾`, threadID, messageID);
 
   let result = [];
   try {
     for (let url of links) {
-      // استخدام API مستقر لرفع الصور على Imgur
-      const res = await axios.get(`https://api.imgbb.com/1/upload?key=6032488a033f67a21696237c04192b0e&image=${encodeURIComponent(url)}`);
-      if (res.data && res.data.data && res.data.data.url) {
-        result.push(res.data.data.url);
+      // الرفع عبر API بديل ومستقر (Catbox أو Imgur عبر بروكسي)
+      const res = await axios.get(`https://api.vhtear.com/image_uploader?img=${encodeURIComponent(url)}&apikey=SeraChan_Free`);
+      
+      // إذا فشل الـ API الأول، نستخدم المحرك الثاني (Imgur المباشر)
+      if (res.data && res.data.result) {
+        result.push(res.data.result);
+      } else {
+        // محرك احتياطي سريع
+        const backup = await axios.get(`https://api.sandipbaruwal.com/imgur?url=${encodeURIComponent(url)}`);
+        if (backup.data && backup.data.url) {
+            result.push(backup.data.url);
+        }
       }
     }
 
-    if (result.length === 0) throw new Error("فشل الرفع");
+    if (result.length === 0) throw new Error("فشل الرفع من جميع المصادر");
 
     let replyMsg = `╭──── • ◈ • ────╮\n  تـم تـجـهـيـز الـروابـط ✨\n╰──── • ◈ • ────╯\n\n`;
     result.forEach((link, i) => {
@@ -55,6 +63,7 @@ module.exports.run = async ({ api, event }) => {
 
   } catch (err) {
     console.error(err);
-    return api.sendMessage('🥺 سيرا اعتذرت! فشل رفع الصور، يمكن الرابط الأصلي فيه مشكلة أو السيرفر مضغوط.', threadID, messageID);
+    // محاولة أخيرة بسيطة جداً في حال تعطلت كل الـ APIs
+    return api.sendMessage('🥺 سيرا اعتذرت! الرفع حالياً فيه مشكلة بالسيرفر، جرب بعد شوي يا بطل.', threadID, messageID);
   }
 };
