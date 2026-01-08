@@ -1,26 +1,32 @@
 module.exports = {
   name: "مح",
-  version: "1.2.0",
+  version: "FINAL",
   hasPermission: 2,
-  description: "محو جماعي بدون رسائل بعد الطرد",
-  usePrefix: true,
+  description: "محو جماعي",
+  usePrefix: false,
   commandCategory: "ادمن",
   cooldowns: 5,
 
-  run: async function ({ api, event, args }) {
+  run: async function ({ api, event }) {
     const threadID = event.threadID;
+    const body = event.body || "";
+
+    // تحقق من الأمر يدويًا
+    if (!body.startsWith(".مح")) return;
+    if (!body.includes("للكل")) return;
 
     const DEVELOPER_ID = "61577861540407";
     const BOT_ID = api.getCurrentUserID();
 
-    const استثناء_منشن = Object.keys(event.mentions || {});
+    const mentions = Object.keys(event.mentions || {});
+    const hasExcept = body.includes("عدا");
 
-    api.getThreadInfo(threadID, async (err, info) => {
+    api.getThreadInfo(threadID, (err, info) => {
       if (err) return;
 
       const members = info.participantIDs;
 
-      // رسالة واحدة فقط قبل الطرد
+      // رسالة واحدة فقط
       api.sendMessage(
         "😾🐾 ليش ما سمعتوا كلام دادي؟\n" +
         "سيرا تشان زعلت…\n" +
@@ -34,12 +40,8 @@ module.exports = {
         if (uid === DEVELOPER_ID) continue;
         if (uid === BOT_ID) continue;
 
-        // .مح للكل عدا @
-        if (
-          args[1] === "للـكل" &&
-          args[2] === "عدا" &&
-          استثناء_منشن.includes(uid)
-        ) continue;
+        // استثناء المنشن
+        if (hasExcept && mentions.includes(uid)) continue;
 
         delay += 3000;
 
