@@ -1,60 +1,76 @@
-const fs = require("fs");
+const fs = require("fs-extra");
 
 module.exports.config = {
   name: "ارجاع",
-  version: "1.0.3",
-  hasPermssion: 2, // 1 = المشرف، 2 = المطور
+  version: "2.2.0",
+  hasPermssion: 1, 
   credits: "Sera Chan",
-  description: "يرجع أي عضو خرج مرة واحدة فقط ويرسل له رسالة دلع",
+  description: "ترجع العضو عن طريق الآيدي أو المنشن ✨",
   commandCategory: "الادارة",
-  usages: "-ارجاع [منشن الشخص]",
+  usages: "[الآيدي] أو [@منشن]",
   cooldowns: 5
 };
 
-// حفظ حالة الخروج لكل مجموعة
-let leaveCount = {}; // { threadID: { userID: عدد مرات الخروج } }
+const path = __dirname + "/cache/leaveCount.json";
 
 module.exports.run = async function({ api, event, args, Users }) {
-  const { threadID, mentions } = event;
+  const { threadID, messageID, mentions } = event;
 
-  if (!Object.keys(mentions).length)
-    return api.sendMessage("❌ منشن العضو لإرجاعه!", threadID);
+  if (!fs.existsSync(path)) fs.writeJsonSync(path, {});
+  let leaveData = fs.readJsonSync(path);
 
-  for (let userID of Object.keys(mentions)) {
-    // تهيئة
-    if (!leaveCount[threadID]) leaveCount[threadID] = {};
-    if (!leaveCount[threadID][userID]) leaveCount[threadID][userID] = 0;
+  let targetIDs = [];
 
-    // تحقق من عدد مرات الخروج
-    if (leaveCount[threadID][userID] >= 2) {
-      api.sendMessage(`❌ ${userID} خرج مرتين متتاليتين، لن يتم إرجاعه`, threadID);
+  // 1. التحقق من وجود منشن
+  if (Object.keys(mentions).length > 0) {
+    targetIDs = Object.keys(mentions);
+  } 
+  // 2. التحقق من وجود آيدي في المدخلات (args)
+  else if (args.length > 0) {
+    targetIDs = args.filter(id => !isNaN(id));
+  }
+
+  if (targetIDs.length === 0) {
+    return api.sendMessage("╭──── • ◈ • ────╮\n  يوه! حط آيدي الشخص أو سوي له منشن ✨\n╰──── • ◈ • ────╯", threadID, messageID);
+  }
+
+  for (let userID of targetIDs) {
+    if (!leaveData[threadID]) leaveData[threadID] = {};
+    if (!leaveData[threadID][userID]) leaveData[threadID][userID] = 0;
+
+    // التحقق من سجل الخروج
+    if (leaveData[threadID][userID] >= 2) {
+      api.sendMessage(`🥺 يا عسل، الشخص هذا 【 ${userID} 】 خرج كثير.. سيرا ما تقدر ترجعه!`, threadID, messageID);
       continue;
     }
 
     try {
       await api.addUserToGroup(userID, threadID);
-      leaveCount[threadID][userID]++;
+      leaveData[threadID][userID]++;
+      fs.writeJsonSync(path, leaveData);
 
-      const name = await Users.getNameUser(userID);
+      const name = await Users.getNameUser(userID) || "العضو";
       api.sendMessage(
-        `🥳 تم إعادة ${name} للكروب بنجاح!\n😹 𝙎𝙀𝙍𝘼 𝘾𝙃𝘼𝙉 تقول: "تعال نلعب مجددًا!"`,
+        `✨ تدااااا! رجعت لك الحبيب ✨\n\n🐾 【 ${name} 】 نورتنا من جديد يا سكرة، لا تطلع مرة ثانية وتزعل سيرا! 🎀`,
         threadID
       );
     } catch (e) {
-      api.sendMessage(`❌ لم أستطع إعادة العضو: ${e.message}`, threadID);
+      api.sendMessage(`❌ سيرا حاولت ترجع الحساب 【 ${userID} 】 بس ما قدرت! يمكن طاردني أو حسابه مقفل 🥺`, threadID, messageID);
     }
   }
 };
 
-// ==================== HANDLE EVENT ====================
 module.exports.handleEvent = async function({ api, event }) {
   const { threadID, logMessageType, logMessageData } = event;
 
-  // متابعة خروج العضو
   if (logMessageType === "log:unsubscribe") {
+    if (!fs.existsSync(path)) fs.writeJsonSync(path, {});
+    let leaveData = fs.readJsonSync(path);
+
     const leftID = logMessageData.leftParticipantFbId;
-    if (!leaveCount[threadID]) leaveCount[threadID] = {};
-    if (!leaveCount[threadID][leftID]) leaveCount[threadID][leftID] = 1;
-    else leaveCount[threadID][leftID]++; // زيادة عداد الخروج
+    if (!leaveData[threadID]) leaveData[threadID] = {};
+    if (!leaveData[threadID][leftID]) leaveData[threadID][leftID] = 0;
+    
+    fs.writeJsonSync(path, leaveData);
   }
 };
