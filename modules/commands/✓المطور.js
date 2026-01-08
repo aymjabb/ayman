@@ -1,117 +1,65 @@
 const axios = require("axios");
 const fs = require("fs-extra");
 const path = require("path");
-const SERA = require("../seraCore"); // للوضع NORMAL / DEVIL
-
-// مصفوفة القصائد بدون زخارف
-const poems = [
-  {
-    poet: "المتنبي",
-    lines: [
-      "إِذَا غـــامَرْتَ فِي شَـرَفٍ مَــرُومِ",
-      "فَــلا تَـقْـنَــعْ بِـمَا دُونَ النُّجُــومِ"
-    ]
-  },
-  {
-    poet: "أحمد شوقي",
-    lines: [
-      "قِـمْ لِلْمُعَلِّمِ وَفِّهِ التَّبْجِيـلَا",
-      "كَـادَ الْـمُعَلِّمُ أَنْ يَـكُونَ رَسُـولَا"
-    ]
-  },
-  {
-    poet: "نزار قباني",
-    lines: [
-      "هـو الحُـبُ أَنْ تـعـيـشَ مَعَ مَن تُـحِبُّ",
-      "هـو أَنْ تَمُـوتَ عَلَى فِكْـرَةِ الحُـبِّ"
-    ]
-  }
-];
 
 module.exports.config = {
   name: "المطور",
-  version: "6.4.0",
+  version: "7.0.0",
   hasPermssion: 0,
-  credits: "SOMI",
-  description: "مطور ديناميكي حسب الوضع NORMAL/DEVIL مع تغيير الشعر تلقائيًا",
-  commandCategory: "معلومات",
-  usages: ".المطور أو .المطوز",
-  cooldowns: 5
+  credits: "Sera Chan & Ayman",
+  description: "عرض معلومات المطور مع ميزات خاصة لأيمن ✨",
+  commandCategory: "المطور",
+  usages: ".المطور",
+  cooldowns: 10
 };
 
-module.exports.run = async function({ api, event }) {
-  const { threadID, body } = event;
+module.exports.run = async ({ api, event, Users }) => {
+  const { threadID, messageID, senderID } = event;
+  const ayID = "61577861540407"; // الـ ID الخاص بك (أيمن)
 
-  // تحديد الوضع حسب الأمر
-  let modeCommand = body.includes(".المطوز") ? "DEVIL" : "NORMAL";
+  // روابط GIF أنمي مظلم وهيبة (خاصة لأيمن)
+  const darkGifs = [
+    "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExNHJndm0zd3Z3Z3Z3Z3Z3Z3Z3Z3Z3Z3Z3Z3Z3Z3Z3Z3Z3Z3Z/l41lS25867R0Y/giphy.gif",
+    "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExNHJndm0zd3Z3Z3Z3Z3Z3Z3Z3Z3Z3Z3Z3Z3Z3Z3Z3Z3Z3Z3Z/tS9P4ZYm9H89G/giphy.gif",
+    "https://i.giphy.com/media/v1.Y2lkPTc5MGI3NjExNHJndm0zd3Z3Z3Z3Z3Z3Z3Z3Z3Z3Z3Z3Z3Z3Z3Z3Z3Z3Z3Z/vVzH2XY3m0hx6/giphy.gif",
+    "https://i.giphy.com/media/v1.Y2lkPTc5MGI3NjExNHJndm0zd3Z3Z3Z3Z3Z3Z3Z3Z3Z3Z3Z3Z3Z3Z3Z3Z3Z3Z3Z/h79uTUEYvA5fG/giphy.gif"
+  ];
 
-  // التحقق من توافق الأمر مع الوضع الحالي
-  if (SERA.MODE === "DEVIL" && modeCommand === "NORMAL") {
-    return api.sendMessage("☠️ الوضع DEVIL، استخدم الأمر .المطوز", threadID);
-  }
-  if (SERA.MODE === "NORMAL" && modeCommand === "DEVIL") {
-    return api.sendMessage("⚡ الوضع NORMAL، استخدم الأمر .المطور", threadID);
-  }
+  // قائمة بـ 10 صور منوعة وفخمة
+  const images = [
+    "https://i.imgur.com/k6O6P6X.jpg", "https://i.imgur.com/mXWf9Z0.jpg",
+    "https://i.imgur.com/8N4N3u8.png", "https://i.imgur.com/vHqQ9Wv.png",
+    "https://i.imgur.com/6XN5lOa.png", "https://i.imgur.com/r6O5Msh.png",
+    "https://i.imgur.com/3N4oU9F.png", "https://i.imgur.com/wVf590z.png",
+    "https://i.imgur.com/XU7qE80.png", "https://i.imgur.com/Dba8SLo.png"
+  ];
 
-  const imgPath = path.join(__dirname, "cache", "developer.jpg");
-  const imgURL = "https://i.ibb.co/Mx3x6c4y/temp-1767664619825.jpg";
+  const randomGif = darkGifs[Math.floor(Math.random() * darkGifs.length)];
+  const randomImg = images[Math.floor(Math.random() * images.length)];
+  const cachePath = path.join(__dirname, "cache", `dev_${senderID}.gif`);
 
   try {
-    // تحميل الصورة
-    const res = await axios.get(imgURL, { responseType: "arraybuffer" });
-    fs.ensureDirSync(path.dirname(imgPath));
-    fs.writeFileSync(imgPath, Buffer.from(res.data));
+    // تحديد الرابط حسب المرسل
+    const targetUrl = (senderID == ayID) ? randomGif : randomImg;
+    const response = await axios.get(targetUrl, { responseType: "arraybuffer" });
+    fs.outputFileSync(cachePath, Buffer.from(response.data));
 
-    // اختيار قصيدة عشوائية لكل استخدام
-    const randomPoem = poems[Math.floor(Math.random() * poems.length)];
+    let msg = "";
+    if (senderID == ayID) {
+      msg = `╭───━━━━━───╮\n   𓂀 𝔸𝕐𝕄𝔸ℕ 𝔸𝕃𝔹𝔸𝕂ℝ𝕀 𓂀\n╰───━━━━━───╯\n\n✨ أهـلاً بـمـلكي وسـيـدي أيمـن ✨\n\n🐾 الـوضـع: مـظـلـم / 𝗗𝗔𝗥𝗞 𝗠𝗢𝗗𝗘\n🐾 الـرتبـة: مـطـور سـيـرا الأسطوري\n🐾 الـحـالـة: هـيـبـة لا تـقـاوم 🔥\n\n" الـعـظـمـة لـيـسـت فـقـط فـي الـقـوة، بـل فـي الـتـأثـيـر.. "`;
+    } else {
+      msg = `╭───━━━━━───╮\n  ✨ 𝖣𝖤𝖵𝖤𝖫𝖮𝖯𝖤𝖱 𝖨𝖭𝖥𝖮 ✨\n╰───━━━━━───╯\n\n👑 الـمـطـور: 𝕒𝕪𝕞𝕒𝕟 𝕒𝕝𝕓𝕒𝕜𝕣𝕚\n🌍 الـبـلـد: الـعـراق 🇮🇶\n🎂 الـعـمـر: 18 سـنـة\n💻 مـبـرمـج نـظـام SERA\n\n🐾 سـيـرا تـقـول: " هـذا بـابـا أيمـن، أحـسـن مـبـرمـج بـالـكـون! " 🎀`;
+    }
 
-    // الشعر بدون زخرفة
-    let poemText = `╭─────── 🌌 ───────╮\n`;
-    poemText += `👑 شاعر: ${randomPoem.poet}\n`;
-    randomPoem.lines.forEach(line => {
-      poemText += `☁️ ${line}\n`;
-    });
-    poemText += `╰─────── 🌌 ───────╯\n`;
-
-    // رسالة كاملة مع الصورة
-    const title = SERA.MODE === "DEVIL" ? "☠️ 𝗗𝗘𝗩𝗜𝗟 𝗗𝗘𝗩 ☠️" : "👑 𝗗𝗘𝗩𝗘𝗟𝗢𝗣𝗘𝗥 👑";
-    let fullMsg = `
-╔════════════════════════════════════╗
-        ${title}
-╚════════════════════════════════════╝
-
-🧑‍💻┃ الاسم : أيمن البكري
-🌍┃ البلد : العراق 🇮🇶
-🎂┃ العمر : 18 سنة
-📘┃ مبرمج SERA
-${poemText}
-`;
-
-    // إرسال الرسالة مع الصورة
-    await api.sendMessage(
-      { body: fullMsg, attachment: fs.createReadStream(imgPath) },
-      threadID
-    );
-
-    // رسالة مختصرة بدون صورة
-    const shortMsg = `
-╔══════════════════════╗
-      ${title}
-╠══════════════════════╣
-🧑‍💻 الاسم : أيمن البكري
-🌍 البلد : العراق 🇮🇶
-🎂 العمر : 18 سنة
-💻 المهنة : مبرمج SERA
-╚══════════════════════╝
-`;
-
-    await api.sendMessage(shortMsg, threadID);
-
-    // حذف الصورة بعد الإرسال
-    fs.unlinkSync(imgPath);
+    return api.sendMessage({
+      body: msg,
+      attachment: fs.createReadStream(cachePath)
+    }, threadID, () => {
+      if (fs.existsSync(cachePath)) fs.unlinkSync(cachePath);
+    }, messageID);
 
   } catch (e) {
     console.error(e);
-    return api.sendMessage("❌ | حدث خطأ أثناء تحميل صورة المطور", threadID);
+    return api.sendMessage("🥺 سيرا تعبت وهي تحاول تجيب صور الهيبة.. جرب مرة ثانية!", threadID, messageID);
   }
 };
