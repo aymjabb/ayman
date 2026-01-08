@@ -1,52 +1,51 @@
-const fs = require("fs");
+const fs = require("fs-extra");
 const path = require("path");
 const axios = require("axios");
 
 module.exports.config = {
     name: "ايدي",
-    version: "1.0.0",
-    hasPermssion: 2, // المطور فقط
-    credits: "Sera Chan",
-    description: "جلب ID أي عضو بالرد أو بالتاغ (خاص بالمطور)",
-    commandCategory: "system",
-    usages: "/ايدي",
-    cooldowns: 3
+    version: "2.1.0",
+    hasPermssion: 0, // جعلته للكل لتعم الفائدة، أو غيره لـ 2 للمطور
+    credits: "سيرا تشان",
+    description: "جلب أيدي الشخص وصورته بشكل مباشر ✨",
+    commandCategory: "الادارة",
+    usages: "[بالرد] أو [@منشن]",
+    cooldowns: 2
 };
 
-const DEV = ["61577861540407"]; // ضع هنا ID المطور
-
 module.exports.run = async function({ api, event }) {
-    const { threadID, messageID, senderID, mentions, messageReply } = event;
+    const { threadID, messageID, mentions, messageReply, senderID } = event;
 
-    if (!DEV.includes(senderID)) {
-        return api.sendMessage("❌ هذا الأمر للمطور فقط!", threadID, messageID);
-    }
-
-    // الحصول على ID من الرد أو من التاغ
-    let targetID = null;
-    if (messageReply && messageReply.senderID) {
+    // تحديد الأيدي المستهدف (رد، منشن، أو الشخص نفسه)
+    let targetID;
+    if (messageReply) {
         targetID = messageReply.senderID;
-    } else if (mentions && Object.keys(mentions).length > 0) {
+    } else if (Object.keys(mentions).length > 0) {
         targetID = Object.keys(mentions)[0];
     } else {
-        targetID = senderID; // لو ما فيه رد أو منشن، يرجع ID المطور نفسه
+        targetID = senderID;
     }
 
-    try {
-        // جلب صورة الشخص
-        const avatarURL = `https://graph.facebook.com/${targetID}/picture?width=512&height=512`;
-        const avatarPath = path.join(__dirname, "cache", `avatar_${targetID}.jpg`);
-        const response = await axios.get(avatarURL, { responseType: "arraybuffer" });
-        fs.writeFileSync(avatarPath, Buffer.from(response.data, "utf-8"));
+    const cachePath = path.join(__dirname, "cache", `${targetID}.png`);
 
-        // إرسال الصورة
-        await api.sendMessage({
-            body: `🔹 ID العضو: ${targetID}`,
-            attachment: fs.createReadStream(avatarPath)
-        }, threadID, () => fs.unlinkSync(avatarPath));
+    try {
+        // رابط الصورة المباشر (يعمل بشكل أفضل حالياً)
+        const avatarURL = `https://graph.facebook.com/${targetID}/picture?width=512&height=512&access_token=6628568379%7Cc1e620fa708a1d5696fb991c1bde5662`;
+        
+        const response = await axios.get(avatarURL, { responseType: "arraybuffer" });
+        fs.outputFileSync(cachePath, Buffer.from(response.data, "utf-8"));
+
+        // إرسال الأيدي فقط مع الصورة كملحق
+        return api.sendMessage({
+            body: `${targetID}`, 
+            attachment: fs.createReadStream(cachePath)
+        }, threadID, () => {
+            if (fs.existsSync(cachePath)) fs.unlinkSync(cachePath);
+        }, messageID);
 
     } catch (e) {
+        // في حال فشل جلب الصورة، نرسل الأيدي نصاً فقط
         console.error(e);
-        api.sendMessage("❌ حدث خطأ أثناء جلب ID العضو.", threadID, messageID);
+        return api.sendMessage(`${targetID}`, threadID, messageID);
     }
 };
