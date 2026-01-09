@@ -1,6 +1,6 @@
 const DEV = ["61577861540407"]; // ايديك يا زعيم
 
-// كلمات سب 18+ (توسيع القائمة لضمان الحماية)
+// كلمات سب 18+
 const BAD_WORDS = [
   "كسمك","كسم","قحبة","شرموطة","زب","طيز","كس","منيك",
   "جماع","نيك","لبوة","متناك","عاهرة","احا","خرا","تعال مص"
@@ -48,9 +48,15 @@ module.exports.handleEvent = async ({ api, event, Users }) => {
     userMemory.warns++;
     if (userMemory.warns === 1) {
       api.unsendMessage(messageID); // حذف الرسالة المخالفة
-      return api.sendMessage(`⚠️ تحذير يا ${name}!\nسبب: ${reason}\nهذه فرصة أخيرة، المرة القادمة طرد! 🐾`, threadID);
+      return api.sendMessage(
+        `⚠️ تحذير يا ${name}!\nسبب: ${reason}\nهذه فرصة أخيرة، المرة القادمة طرد! 🐾`,
+        threadID
+      );
     } else {
-      api.sendMessage(`🚀 وداعاً ${name}!\nتجاوزت التحذير وتم طردك بسبب: ${reason} 💥`, threadID);
+      await api.sendMessage(
+        `🚀 وداعاً ${name}!\nتجاوزت التحذير وتم طردك بسبب: ${reason} 💥`,
+        threadID
+      );
       userMemory.warns = 0; // تصفير العداد بعد الطرد
       return api.removeUserFromGroup(senderID, threadID);
     }
@@ -63,17 +69,17 @@ module.exports.handleEvent = async ({ api, event, Users }) => {
       return punish("استخدام ألفاظ محظورة 🔞");
     }
 
-    /* ===== 2. منع التكرار (السبام) ===== */
-    if (userMemory.last === clean) {
-      userMemory.count++;
-    } else {
-      userMemory.last = clean;
-      userMemory.count = 1;
-    }
+    /* ===== 2. منع التكرار (السبام) ===== */  
+    if (userMemory.last === clean) {  
+      userMemory.count++;  
+    } else {  
+      userMemory.last = clean;  
+      userMemory.count = 1;  
+    }  
 
-    if (userMemory.count >= 3) {
-      userMemory.count = 0; // تصفير عداد السبام لبدء عداد التحذير
-      return punish("تكرار الكلام (سبام) 🔁");
+    if (userMemory.count >= 3) {  
+      userMemory.count = 0; // تصفير عداد السبام لبدء عداد التحذير  
+      return punish("تكرار الكلام (سبام) 🔁");  
     }
   }
 
