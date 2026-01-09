@@ -1,42 +1,60 @@
+const axios = require("axios");
+const fs = require("fs-extra");
+const path = require("path");
+
 module.exports.config = {
   name: "ترحيب",
-  version: "2.5.0",
-  hasPermssion: 0,
+  version: "1.0.0",
+  hasPermssion: 1,
   credits: "Ayman & Sera",
-  description: "ترحيب تلقائي عفوي ومنظم عند دخول الأعضاء الجدد",
-  commandCategory: "نظام"
+  description: "الترحيب بالأعضاء الجدد بصورتهم الشخصية",
+  commandCategory: "نظام",
+  cooldowns: 0
 };
 
-module.exports.handleEvent = async function({ api, event, Users }) {
+module.exports.handleEvent = async ({ api, event, Users }) => {
   const { threadID, logMessageType, logMessageData } = event;
 
-  // فحص إذا كان الحدث هو دخول عضو جديد
+  // التحقق من انضمام عضو جديد
   if (logMessageType === "log:subscribe") {
-    const addedParticipants = logMessageData.addedParticipants;
-    
-    for (const participant of addedParticipants) {
-      const id = participant.userFbId;
-      const name = await Users.getNameUser(id);
-      
-      // رسالة عفوية، مرتبة، وقليلة الإيموجيات لعدم التشويش
-      const msg = `
-يا هلا والله بـ ${name}! ✨
+    const newNode = logMessageData.addedParticipants[0];
+    const userID = newNode.userID;
+    const name = await Users.getNameUser(userID);
 
-نورتنا بوجودك في مجموعتنا المتواضعة.. 
-خذ راحتك المكان مكانك، بس لا تنسى تطلع على القوانين عشان تضل منورنا دايماً 🌸
+    if (userID !== api.getCurrentUserID()) {
+      // رابط صورة العضو الشخصية بجودة عالية
+      const avatarURL = `https://graph.facebook.com/${userID}/picture?width=512&height=512&access_token=6628568379%7Cc1e620fa708a1d5696fb991c1bde5662`;
+      const imgPath = path.join(__dirname, "cache", `welcome_${userID}.jpg`);
 
-أتمنى لك وقت ممتع معانا! 🐾
+      try {
+        const res = await axios.get(avatarURL, { responseType: "arraybuffer" });
+        fs.outputFileSync(imgPath, Buffer.from(res.data));
+
+        const welcomeMsg = `
+✨ أهـلاً بـك فـي عـالـمـنـا يـا [ ${name} ] ✨
 ──────────────────
-👑 مـطـور الـنـظـام: أيـمـن الـبـكـري
-`;
-      
-      // إرسال الترحيب فوراً
-      api.sendMessage(msg, threadID);
+🛡️ نـورت الـكـروب بـانـضـمـامـك!
+📜 نـرجـو مـنـك الـتـزام الـقـوانـيـن لـتـجـنـب الـطرد.
+💬 تـفـاعـل لـتـصـبـح مـن الـمـلـوك وتـصـعـد فـي الـتـرتـيـب.
+
+🐾 مـع تـحـيـات: سـيـرا تـشـان والـمـطـور أيـمـن
+──────────────────
+        `;
+
+        return api.sendMessage({
+          body: welcomeMsg,
+          attachment: fs.createReadStream(imgPath)
+        }, threadID, () => {
+          if (fs.existsSync(imgPath)) fs.unlinkSync(imgPath);
+        });
+
+      } catch (e) {
+        return api.sendMessage(`✨ أهلاً بك يا ${name} في مجموعتنا! نورتنا 🐾`, threadID);
+      }
     }
   }
 };
 
-// هذا الأمر يعمل تلقائياً ولا يحتاج لكتابة .ترحيب
-module.exports.run = async function({}) {
-  // لا يحتاج لشيء هنا
+module.exports.run = async ({ api, event }) => {
+  return api.sendMessage("⚙️ هذا النظام يعمل تلقائياً عند انضمام أي عضو جديد!", event.threadID);
 };
