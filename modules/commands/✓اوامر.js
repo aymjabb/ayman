@@ -2,7 +2,7 @@ const fs = require("fs-extra");
 
 module.exports.config = {
   name: "اوامر",
-  version: "3.2.0",
+  version: "3.2.1",
   hasPermssion: 0,
   credits: "Ayman & Sera",
   description: "Menu with category selection",
@@ -14,7 +14,7 @@ module.exports.config = {
 module.exports.run = async function({ api, event }) {
   const { threadID, messageID, senderID } = event;
 
-  // تعريف النصوص العربية بعيداً عن هيكل الكود الرئيسي لتجنب أخطاء التشفير
+  // نصوص عربية وجميلة
   const t = {
     title: "𝑺𝑬𝑹𝑨 𝑪𝑯𝑨𝑵",
     welcome: "أهلاً بك يا زعيم في قائمة التحكم",
@@ -28,12 +28,14 @@ module.exports.run = async function({ api, event }) {
     c5: "✨ متفرقات"
   };
 
-  const categories = {};
-  categories[t.c1] = ["مح", "كتم", "قفل", "تحذير", "تبليغ", "كشف", "تصفية", "ترحيب", "ضبط"];
-  categories[t.c2] = ["تحكم", "حظر", "نشر", "رفع", "فحص", "ايدي"];
-  categories[t.c3] = ["مسابقة", "متجر", "ترتيب", "لوخيروك", "اقتباسات", "اذكار", "نكت", "تحدي"];
-  categories[t.c4] = ["تخييلي", "سلاحي", "اصفعي", "حضن", "معلمي", "المطور", "مزخرف"];
-  categories[t.c5] = ["مستوى", "اكشن", "هدية", "شخصية", "كنية", "اضحك", "مزاح"];
+  // تعريف الأوامر حسب الفئات
+  const categories = {
+    [t.c1]: ["مح", "كتم", "قفل", "تحذير", "تبليغ", "كشف", "تصفية", "ترحيب", "ضبط"],
+    [t.c2]: ["تحكم", "حظر", "نشر", "رفع", "فحص", "ايدي"],
+    [t.c3]: ["مسابقة", "متجر", "ترتيب", "لوخيروك", "اقتباسات", "اذكار", "نكت", "تحدي"],
+    [t.c4]: ["تخييلي", "سلاحي", "اصفعي", "حضن", "معلمي", "المطور", "مزخرف"],
+    [t.c5]: ["مستوى", "اكشن", "هدية", "شخصية", "كنية", "اضحك", "مزاح"]
+  };
 
   const keys = Object.keys(categories);
   
@@ -52,20 +54,24 @@ module.exports.run = async function({ api, event }) {
 
   return api.sendMessage(msg, threadID, (err, info) => {
     if (err) return console.error(err);
-    if (global.client && global.client.handleReply) {
-      global.client.handleReply.push({
-        name: "اوامر",
-        messageID: info.messageID,
-        author: senderID,
-        categories: categories
-      });
-    }
+
+    // تخزين الردود للتعامل مع اختيار الفئات
+    if (!global.client) global.client = {};
+    if (!global.client.handleReply) global.client.handleReply = [];
+
+    global.client.handleReply.push({
+      name: "اوامر",
+      messageID: info.messageID,
+      author: senderID,
+      categories: categories
+    });
   }, messageID);
 };
 
 module.exports.handleReply = async function({ api, event, handleReply }) {
   const { threadID, messageID, body, senderID } = event;
 
+  // السماح فقط لصاحب الرسالة الأصلية
   if (senderID !== handleReply.author) return;
 
   const categories = handleReply.categories;
@@ -92,6 +98,8 @@ module.exports.handleReply = async function({ api, event, handleReply }) {
     if (api.unsendMessage) api.unsendMessage(handleReply.messageID);
 
     return api.sendMessage(msg, threadID, (err, info) => {
+      if (!global.client) global.client = {};
+      if (!global.client.handleReply) global.client.handleReply = [];
       global.client.handleReply.push({
         name: "اوامر",
         messageID: info.messageID,
@@ -100,7 +108,6 @@ module.exports.handleReply = async function({ api, event, handleReply }) {
       });
     }, messageID);
   } else {
-    const errorMsg = "❌ رقم غير صالح، اختر من القائمة أو 0 للرجوع";
-    return api.sendMessage(errorMsg, threadID, messageID);
+    return api.sendMessage("❌ رقم غير صالح، اختر من القائمة أو 0 للرجوع", threadID, messageID);
   }
 };
