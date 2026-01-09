@@ -1,20 +1,33 @@
 const fs = require("fs-extra");
 const path = require("path");
-const scoresPath = path.join(__dirname, "cache", "topPlayer.json");
 
-// وظائف مساعدة
+const cacheDir = path.join(__dirname, "cache");
+const scoresPath = path.join(cacheDir, "topPlayer.json");
+
+// ===== وظائف مساعدة =====
 function loadData() {
-    if (!fs.existsSync(scoresPath)) fs.outputJsonSync(scoresPath, {});
-    return fs.readJsonSync(scoresPath);
+    try {
+        if (!fs.existsSync(cacheDir)) fs.mkdirSync(cacheDir, { recursive: true });
+        if (!fs.existsSync(scoresPath)) fs.writeJsonSync(scoresPath, {});
+        return fs.readJsonSync(scoresPath);
+    } catch (err) {
+        console.error("خطأ تحميل البيانات:", err);
+        return {};
+    }
 }
 
 function saveData(data) {
-    fs.outputJsonSync(scoresPath, data);
+    try {
+        fs.writeJsonSync(scoresPath, data, { spaces: 2 });
+    } catch (err) {
+        console.error("خطأ حفظ البيانات:", err);
+    }
 }
 
+// ===== إعدادات الأمر =====
 module.exports.config = {
     name: "متجر",
-    version: "1.0.0",
+    version: "1.0.1",
     hasPermssion: 0,
     credits: "Ayman",
     description: "متجر لشراء مميزات بنقاط المسابقات",
@@ -22,15 +35,21 @@ module.exports.config = {
     cooldowns: 5
 };
 
-module.exports.run = async ({ api, event, args, Users }) => {
+// ===== تنفيذ الأمر =====
+module.exports.run = async ({ api, event, Users }) => {
     const { threadID, messageID, senderID } = event;
-    let data = loadData();
+    const data = loadData();
 
-    if (!data[senderID]) data[senderID] = { name: await Users.getNameUser(senderID), wins: 0, points: 0 };
-    
-    // تحويل الفوزات لنقاط (كل فوز = 1000 نقطة) إذا كنت تريد نظام نقاط مستقل
-    // هنا سنعتمد على "النقاط" كعملة
-    let userPoints = data[senderID].points || 0;
+    if (!data[senderID]) {
+        data[senderID] = {
+            name: await Users.getNameUser(senderID),
+            wins: 0,
+            points: 0
+        };
+        saveData(data);
+    }
+
+    const userPoints = data[senderID].points || 0;
 
     const shopMenu = `
 🛍️ مـتـجـر سـيـرا تـشـان الـمـلكي 🛍️
@@ -40,7 +59,7 @@ module.exports.run = async ({ api, event, args, Users }) => {
 1️⃣ - شراء لقب مخصص (5000 نقطة)
 2️⃣ - شراء حصانة من الطرد ليوم (10000 نقطة)
 3️⃣ - تغيير كنية العضو (2000 نقطة)
-4️⃣ - إرسال هدية نقاط لصديق (100 نقطة رسوم)
+4️⃣ - إرسال هدية نقاط لصديق (قريبًا)
 
 ✨ للـشـراء: رد على الرسالة برقم العنصر
 ──────────────────
@@ -48,35 +67,76 @@ module.exports.run = async ({ api, event, args, Users }) => {
 `;
 
     return api.sendMessage(shopMenu, threadID, (err, info) => {
+        if (err) return;
+
         global.client.handleReply.push({
             name: "متجر",
             messageID: info.messageID,
-            author: senderID,
-            points: userPoints
+            author: senderID
         });
     }, messageID);
 };
 
+// ===== التعامل مع الرد =====
 module.exports.handleReply = async ({ api, event, handleReply }) => {
     const { body, threadID, senderID, messageID } = event;
-    if (handleReply.author !== senderID) return api.sendMessage("❌ هذا المتجر ليس لك!", threadID, messageID);
 
-    let data = loadData();
-    let user = data[senderID];
-
-    if (body === "1") {
-        if (user.points < 5000) return api.sendMessage("💔 نقاطك لا تكفي لشراء لقب!", threadID, messageID);
-        user.points -= 5000;
-        saveData(data);
-        return api.sendMessage("✅ تم الشراء! أرسل الآن اللقب الذي تريده وسيقوم المطور بتثبيته لك.", threadID, messageID);
+    if (handleReply.author !== senderID) {
+        return api.sendMessage("❌ هذا المتجر ليس لك!", threadID, messageID);
     }
 
-    if (body === "2") {
-        if (user.points < 10000) return api.sendMessage("💔 نقاطك لا تكفي لشراء حصانة!", threadID, messageID);
-        user.points -= 10000;
-        saveData(data);
-        return api.sendMessage("🛡️ تم تفعيل الحصانة الملكية لمدة 24 ساعة!", threadID, messageID);
+    const data = loadData();
+    if (!data[senderID]) {
+        return api.sendMessage("⚠️ بياناتك غير موجودة، أعد فتح المتجر.", threadID, messageID);
     }
-    
-    // يمكن إضافة المزيد من العمليات هنا بنفس الطريقة
+
+    const user = data[senderID];
+
+    switch (body) {
+        case "1":
+            if (user.points < 5000)
+                return api.sendMessage("💔 نقاطك لا تكفي لشراء لقب!", threadID, messageID);
+
+            user.points -= 5000;
+            saveData(data);
+
+            return api.sendMessage(
+                "✅ تم الشراء!\n✍️ أرسل الآن اللقب الذي تريده وسيتم تثبيته لك.",
+                threadID,
+                messageID
+            );
+
+        case "2":
+            if (user.points < 10000)
+                return api.sendMessage("💔 نقاطك لا تكفي لشراء الحصانة!", threadID, messageID);
+
+            user.points -= 10000;
+            saveData(data);
+
+            return api.sendMessage(
+                "🛡️ تم تفعيل الحصانة الملكية لمدة 24 ساعة!",
+                threadID,
+                messageID
+            );
+
+        case "3":
+            if (user.points < 2000)
+                return api.sendMessage("💔 نقاطك لا تكفي لتغيير الكنية!", threadID, messageID);
+
+            user.points -= 2000;
+            saveData(data);
+
+            return api.sendMessage(
+                "✏️ تم الخصم!\nأرسل الآن الكنية الجديدة.",
+                threadID,
+                messageID
+            );
+
+        default:
+            return api.sendMessage(
+                "❓ اختيار غير صالح.\nرد برقم من 1 إلى 3.",
+                threadID,
+                messageID
+            );
+    }
 };
