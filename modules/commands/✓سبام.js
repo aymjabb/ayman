@@ -1,20 +1,20 @@
-const DEV = ["61577861540407"]; // ايديك
+const DEV = ["61577861540407"]; // ايديك يا زعيم
 
-// كلمات سب 18+
+// كلمات سب 18+ (توسيع القائمة لضمان الحماية)
 const BAD_WORDS = [
   "كسمك","كسم","قحبة","شرموطة","زب","طيز","كس","منيك",
-  "جماع","نيك","لبوة","متناك","عاهرة","احا","خرا"
+  "جماع","نيك","لبوة","متناك","عاهرة","احا","خرا","تعال مص"
 ];
 
-// تخزين مؤقت داخل الذاكرة
+// تخزين في الذاكرة للتحذيرات والسبام
 const memory = {};
 
 module.exports.config = {
   name: "سبام",
-  version: "1.0.0",
+  version: "2.0.0",
   hasPermssion: 1,
-  credits: "Sera Chan",
-  description: "حماية شاملة: سب + سبام + منع التعديلات",
+  credits: "Sera Chan & Ayman",
+  description: "حماية شاملة بنظام: تحذير ثم طرد",
   commandCategory: "حماية",
   usages: ".سبام",
   cooldowns: 0
@@ -22,47 +22,62 @@ module.exports.config = {
 
 module.exports.run = async ({ api, event }) => {
   return api.sendMessage(
-    "🛡️ سيرا تشان فعّلت الحماية الكاملة\n" +
-    "🚫 سب | 🔁 تكرار | 🧱 تعديل = طرد فوري",
+    "🛡️ تم تفعيل نظام الحماية المطور\n" +
+    "⚠️ تحذير أول.. ثم طرد نهائي 😼\n" +
+    "🚫 سب | 🔁 تكرار | 🧱 تعديل",
     event.threadID,
     event.messageID
   );
 };
 
-module.exports.handleEvent = async ({ api, event }) => {
-  const { threadID, senderID, body, logMessageType } = event;
+module.exports.handleEvent = async ({ api, event, Users }) => {
+  const { threadID, senderID, body, logMessageType, messageID } = event;
   if (!threadID || !senderID) return;
-  if (DEV.includes(senderID)) return;
+  if (DEV.includes(senderID) || senderID == api.getCurrentUserID()) return;
 
   if (!memory[threadID]) memory[threadID] = {};
   if (!memory[threadID][senderID]) {
-    memory[threadID][senderID] = { last: "", count: 0 };
+    memory[threadID][senderID] = { last: "", count: 0, warns: 0 };
   }
 
-  /* ===== منع السب ===== */
+  const userMemory = memory[threadID][senderID];
+  const name = await Users.getNameUser(senderID);
+
+  /* ===== وظيفة تنفيذ العقوبة ===== */
+  const punish = async (reason) => {
+    userMemory.warns++;
+    if (userMemory.warns === 1) {
+      api.unsendMessage(messageID); // حذف الرسالة المخالفة
+      return api.sendMessage(`⚠️ تحذير يا ${name}!\nسبب: ${reason}\nهذه فرصة أخيرة، المرة القادمة طرد! 🐾`, threadID);
+    } else {
+      api.sendMessage(`🚀 وداعاً ${name}!\nتجاوزت التحذير وتم طردك بسبب: ${reason} 💥`, threadID);
+      userMemory.warns = 0; // تصفير العداد بعد الطرد
+      return api.removeUserFromGroup(senderID, threadID);
+    }
+  };
+
+  /* ===== 1. منع السب ===== */
   if (body) {
     const clean = body.toLowerCase().replace(/[\s\W]/g, "");
-
     if (BAD_WORDS.some(w => clean.includes(w))) {
-      await api.sendMessage("🚫 سب ممنوع — سيرا تشان طردتك", threadID);
-      return api.removeUserFromGroup(senderID, threadID);
+      return punish("استخدام ألفاظ محظورة 🔞");
     }
 
-    /* ===== منع التكرار ===== */
-    if (memory[threadID][senderID].last === clean) {
-      memory[threadID][senderID].count++;
+    /* ===== 2. منع التكرار (السبام) ===== */
+    if (userMemory.last === clean) {
+      userMemory.count++;
     } else {
-      memory[threadID][senderID].last = clean;
-      memory[threadID][senderID].count = 1;
+      userMemory.last = clean;
+      userMemory.count = 1;
     }
 
-    if (memory[threadID][senderID].count >= 3) {
-      await api.sendMessage("🔁 سبام مرفوض — طرد فوري", threadID);
-      return api.removeUserFromGroup(senderID, threadID);
+    if (userMemory.count >= 3) {
+      userMemory.count = 0; // تصفير عداد السبام لبدء عداد التحذير
+      return punish("تكرار الكلام (سبام) 🔁");
     }
   }
 
-  /* ===== منع التعديلات ===== */
+  /* ===== 3. منع التعديلات (اسم، صورة، أدمن) ===== */
   const BLOCK = [
     "log:thread-name",
     "log:thread-image",
@@ -73,10 +88,6 @@ module.exports.handleEvent = async ({ api, event }) => {
   ];
 
   if (BLOCK.includes(logMessageType)) {
-    await api.sendMessage(
-      "🧱 محاولة تعديل الكروب\n❌ سيرا تشان تمنع العبث",
-      threadID
-    );
-    return api.removeUserFromGroup(senderID, threadID);
+    return punish("محاولة العبث بإعدادات الكروب 🧱");
   }
 };
