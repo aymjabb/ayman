@@ -1,6 +1,6 @@
 module.exports.config = {
   name: "كتم",
-  version: "1.0.1",
+  version: "1.0.2",
   hasPermssion: 1,
   credits: "Ayman",
   description: "كتم عضو ومنعه من الكلام (حذف رسائله تلقائياً)",
@@ -8,41 +8,55 @@ module.exports.config = {
   cooldowns: 0
 };
 
-// مصفوفة الكتم العالمية
+// مصفوفة عالمية لتخزين الأعضاء المكتمين
 if (!global.seraMuted) global.seraMuted = [];
 
 module.exports.handleEvent = async ({ api, event }) => {
   const { senderID, messageID } = event;
+
   if (!senderID || !messageID) return;
 
+  // إذا العضو مكتم، نحذف أي رسالة يرسلها
   if (global.seraMuted.includes(senderID)) {
     try {
-      await api.unsendMessage(messageID); // حذف الرسالة فوراً
+      await api.unsendMessage(messageID);
+      // إرسال تنبيه في الـ console (اختياري)
+      console.log(`🟢 تم حذف رسالة العضو المكتم: ${senderID}`);
     } catch (err) {
-      console.error(`❌ فشل حذف رسالة ${messageID}:`, err.message);
+      console.error(`❌ فشل حذف رسالة العضو ${senderID}: ${err.message}`);
     }
   }
 };
 
 module.exports.run = async ({ api, event, args }) => {
   const { threadID, messageReply, mentions, type } = event;
-  
-  // تحديد العضو المستهدف (رد أو منشن)
-  let targetID = (type === "message_reply" && messageReply) ? messageReply.senderID 
-                 : (Object.keys(mentions).length > 0 ? Object.keys(mentions)[0] : null);
 
+  // تحديد العضو المستهدف
+  let targetID = null;
+
+  if (type === "message_reply" && messageReply) {
+    targetID = messageReply.senderID;
+  } else if (mentions && Object.keys(mentions).length > 0) {
+    targetID = Object.keys(mentions)[0];
+  }
+
+  // أمر فك الكتم
   if (args[0] && args[0].toLowerCase() === "فك") {
     if (!targetID) return api.sendMessage("👤 منشن الشخص أو رد على رسالته لفك الكتم.", threadID);
     global.seraMuted = global.seraMuted.filter(id => id !== targetID);
     return api.sendMessage("🔓 تم فك الكتم بنجاح، يمكنه الآن إرسال الرسائل.", threadID);
   }
 
+  // إذا لم يُحدد العضو
   if (!targetID) return api.sendMessage("👤 منشن الشخص أو رد على رسالته لكتمه.", threadID);
 
-  if (!global.seraMuted.includes(targetID)) global.seraMuted.push(targetID);
+  // إضافة العضو للكتم إذا لم يكن موجوداً
+  if (!global.seraMuted.includes(targetID)) {
+    global.seraMuted.push(targetID);
+  }
 
   return api.sendMessage(
-    `🤫 تم كتم العضو بنجاح!\n──────────────────\n📛 أي رسالة يرسلها ستتم حذفها تلقائياً بواسطة سيرا تشان.`,
+    `🤫 تم كتم العضو بنجاح!\n──────────────────\n📛 أي رسالة يرسلها سيتم حذفها تلقائياً بواسطة سيرا تشان.`,
     threadID
   );
 };
