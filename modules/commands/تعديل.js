@@ -2,7 +2,7 @@ const axios = require("axios");
 const fs = require("fs-extra");
 const path = require("path");
 
-// smart canvas loader
+// تحميل Canvas (مع fallback على @napi-rs/canvas)
 let createCanvas, loadImage;
 try {
   const canvas = require("canvas");
@@ -16,46 +16,55 @@ try {
 
 module.exports.config = {
   name: "تغير",
-  version: "1.1.0",
+  version: "1.1.1",
   hasPermssion: 0,
-  credits: "SOMI",
-  description: "تغيير خلفية الصورة (مع fallback تلقائي)",
+  credits: "SOMI & Sera",
+  description: "تغيير خلفية الصورة مع fallback تلقائي",
   commandCategory: "🖼️ صور",
-  usages: "خلفية <وصف>",
+  usages: "خلفية <وصف> (رد على صورة)",
   cooldowns: 15
 };
 
 module.exports.run = async function ({ api, event, args }) {
+  const { threadID, messageID, messageReply } = event;
+
   try {
-    if (!event.messageReply || !event.messageReply.attachments?.[0])
+    // التحقق من الرد على صورة
+    if (!messageReply || !messageReply.attachments?.[0] || messageReply.attachments[0].type !== "photo")
       return api.sendMessage(
-        "❌ رد على صورة واكتب:\nخلفية علم العراق",
-        event.threadID,
-        event.messageID
+        "❌ يرجى الرد على صورة واكتب:\nخلفية <وصف>",
+        threadID,
+        messageID
       );
 
     const query = args.join(" ");
     if (!query)
-      return api.sendMessage("❌ اكتب وصف الخلفية", event.threadID);
+      return api.sendMessage("❌ اكتب وصف الخلفية", threadID);
 
-    const imgUrl = event.messageReply.attachments[0].url;
+    const imgUrl = messageReply.attachments[0].url;
 
-    const userImg = path.join(__dirname, `/cache/user.png`);
-    const outImg = path.join(__dirname, `/cache/out.png`);
+    // مسارات الملفات المؤقتة
+    const cacheDir = path.join(__dirname, "cache");
+    if (!fs.existsSync(cacheDir)) fs.mkdirSync(cacheDir, { recursive: true });
 
-    // download user image
-    const img = await axios.get(imgUrl, { responseType: "arraybuffer" });
-    fs.writeFileSync(userImg, img.data);
+    const userImg = path.join(cacheDir, `user_${Date.now()}.png`);
+    const outImg = path.join(cacheDir, `out_${Date.now()}.png`);
 
-    // background from Unsplash
+    // تحميل صورة المستخدم
+    const imgData = await axios.get(imgUrl, { responseType: "arraybuffer" });
+    fs.writeFileSync(userImg, imgData.data);
+
+    // تحميل خلفية من Unsplash
     const bgUrl = `https://source.unsplash.com/800x800/?${encodeURIComponent(query)}`;
     const bg = await loadImage(bgUrl);
     const person = await loadImage(userImg);
 
+    // إنشاء الكانفاس
     const canvas = createCanvas(bg.width, bg.height);
     const ctx = canvas.getContext("2d");
 
-    ctx.drawImage(bg, 0, 0);
+    // رسم الخلفية وصورة المستخدم
+    ctx.drawImage(bg, 0, 0, bg.width, bg.height);
     ctx.drawImage(
       person,
       bg.width * 0.25,
@@ -64,22 +73,23 @@ module.exports.run = async function ({ api, event, args }) {
       bg.height * 0.7
     );
 
+    // حفظ الصورة الناتجة
     fs.writeFileSync(outImg, canvas.toBuffer("image/png"));
 
-    api.sendMessage(
+    // إرسال الصورة مع طابع سيرا تشان
+    await api.sendMessage(
       {
-        body: `✨ تم تغيير الخلفية: ${query}`,
+        body: `✨ تم تغيير الخلفية بنجاح: ${query}\n🐾 بواسطة سيرا تشان`,
         attachment: fs.createReadStream(outImg)
       },
-      event.threadID,
-      () => {
-        fs.unlinkSync(userImg);
-        fs.unlinkSync(outImg);
-      }
+      threadID
     );
 
+    // حذف الملفات المؤقتة
+    [userImg, outImg].forEach(file => fs.existsSync(file) && fs.unlinkSync(file));
+
   } catch (err) {
-    console.error(err);
-    api.sendMessage("⚠️ فشل تغيير الخلفية", event.threadID);
+    console.error("خطأ أثناء تغيير الخلفية:", err);
+    return api.sendMessage("⚠️ فشل تغيير الخلفية، حاول مرة أخرى.", threadID, messageID);
   }
 };
