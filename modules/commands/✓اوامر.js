@@ -2,51 +2,62 @@ const fs = require("fs-extra");
 
 module.exports.config = {
   name: "اوامر",
-  version: "3.1.0",
+  version: "3.2.0",
   hasPermssion: 0,
   credits: "Ayman & Sera",
-  description: "قائمة أوامر البوت المطورة مع نظام الفئات الذكي",
-  commandCategory: "النظام",
+  description: "Menu with category selection",
+  commandCategory: "system",
   usages: ".اوامر",
   cooldowns: 5
 };
 
-module.exports.run = async function({ api, event, args }) {
+module.exports.run = async function({ api, event }) {
   const { threadID, messageID, senderID } = event;
 
-  // إعداد الفئات والأوامر
-  const categories = {
-    "🛡️ الإدارة والسيطرة": ["مح", "كتم", "قفل", "تحذير", "تبليغ", "كشف", "تصفية", "ترحيب", "ضبط"],
-    "👑 تحكم المطور": ["تحكم", "حظر", "نشر", "رفع", "فحص", "ايدي"],
-    "🎮 الألعاب والترفيه": ["مسابقة", "متجر", "ترتيب", "لوخيروك", "اقتباسات", "اذكار", "نكت", "تحدي"],
-    "🤖 الذكاء والصور": ["تخييلي", "سلاحي", "اصفعي", "حضن", "معلمي", "المطور", "مزخرف"],
-    "✨ متفرقات": ["مستوى", "اكشن", "هدية", "شخصية", "كنية", "اضحك", "مزاح"]
+  // تعريف النصوص العربية بعيداً عن هيكل الكود الرئيسي لتجنب أخطاء التشفير
+  const t = {
+    title: "𝑺𝑬𝑹𝑨 𝑪𝑯𝑨𝑵",
+    welcome: "أهلاً بك يا زعيم في قائمة التحكم",
+    select: "الرجاء اختيار رقم الفئة لعرض الأوامر",
+    dev: "المطور: أيمن",
+    replyMsg: "💡 رد على الرسالة برقم الفئة",
+    c1: "🛡️ الإدارة والسيطرة",
+    c2: "👑 تحكم المطور",
+    c3: "🎮 الألعاب والترفيه",
+    c4: "🤖 الذكاء والصور",
+    c5: "✨ متفرقات"
   };
+
+  const categories = {};
+  categories[t.c1] = ["مح", "كتم", "قفل", "تحذير", "تبليغ", "كشف", "تصفية", "ترحيب", "ضبط"];
+  categories[t.c2] = ["تحكم", "حظر", "نشر", "رفع", "فحص", "ايدي"];
+  categories[t.c3] = ["مسابقة", "متجر", "ترتيب", "لوخيروك", "اقتباسات", "اذكار", "نكت", "تحدي"];
+  categories[t.c4] = ["تخييلي", "سلاحي", "اصفعي", "حضن", "معلمي", "المطور", "مزخرف"];
+  categories[t.c5] = ["مستوى", "اكشن", "هدية", "شخصية", "كنية", "اضحك", "مزاح"];
 
   const keys = Object.keys(categories);
   
-  let msg = `╭━━━〔 𝑺𝑬𝑹𝑨 𝑪𝑯𝑨𝑵 〕━━━╮\n\n`;
-  msg += `✨ أهلاً بك يا زعيم في قائمة التحكم ✨\n`;
-  msg += `الرجاء اختيار رقم الفئة لعرض الأوامر:\n\n`;
+  let msg = `╭━━━〔 ${t.title} 〕━━━╮\n\n`;
+  msg += `✨ ${t.welcome} ✨\n`;
+  msg += `${t.select}:\n\n`;
 
   keys.forEach((cat, i) => {
     msg += ` 【 ${i + 1} 】⟢ ${cat}\n`;
   });
 
   msg += `\n──────────────────\n`;
-  msg += `💡 رد على الرسالة برقم الفئة\n`;
-  msg += `💻 المطور: أيمن 🐾\n`;
+  msg += `${t.replyMsg}\n`;
+  msg += `💻 ${t.dev} 🐾\n`;
   msg += `╰━━━━━━━━━━━━━━━━╯`;
 
   return api.sendMessage(msg, threadID, (err, info) => {
     if (err) return console.error(err);
-    // تأكد من وجود نظام الردود في البوت
     if (global.client && global.client.handleReply) {
       global.client.handleReply.push({
-        name: "اوامر", // يجب أن يطابق اسم الأمر في الـ config
+        name: "اوامر",
         messageID: info.messageID,
         author: senderID,
-        categories: categories // تمرير البيانات للرد
+        categories: categories
       });
     }
   }, messageID);
@@ -55,19 +66,15 @@ module.exports.run = async function({ api, event, args }) {
 module.exports.handleReply = async function({ api, event, handleReply }) {
   const { threadID, messageID, body, senderID } = event;
 
-  // التحقق من أن صاحب الأمر هو من يرد
   if (senderID !== handleReply.author) return;
 
   const categories = handleReply.categories;
   const keys = Object.keys(categories);
   const choice = parseInt(body.trim());
 
-  // العودة للقائمة الرئيسية (إعادة تشغيل الأمر)
   if (choice === 0) {
-    api.unsendMessage(handleReply.messageID);
-    return api.sendMessage("🔄 جاري العودة للقائمة...", threadID, () => {
-        return module.exports.run({ api, event });
-    });
+    if (api.unsendMessage) api.unsendMessage(handleReply.messageID);
+    return module.exports.run({ api, event });
   }
 
   if (!isNaN(choice) && choice >= 1 && choice <= keys.length) {
@@ -82,8 +89,7 @@ module.exports.handleReply = async function({ api, event, handleReply }) {
     msg += `🐾 سـيـرا تـشـان تـحـت أمـرك\n`;
     msg += `┗━━━━━━━━━━━━━━━━┛`;
 
-    // حذف القائمة القديمة لإبقاء الشات نظيفاً
-    api.unsendMessage(handleReply.messageID);
+    if (api.unsendMessage) api.unsendMessage(handleReply.messageID);
 
     return api.sendMessage(msg, threadID, (err, info) => {
       global.client.handleReply.push({
@@ -94,6 +100,7 @@ module.exports.handleReply = async function({ api, event, handleReply }) {
       });
     }, messageID);
   } else {
-    return api.sendMessage("❌ رقم غير صالح، اختر من القائمة (1 إلى 5) أو 0 للرجوع.", threadID, messageID);
+    const errorMsg = "❌ رقم غير صالح، اختر من القائمة أو 0 للرجوع";
+    return api.sendMessage(errorMsg, threadID, messageID);
   }
 };
