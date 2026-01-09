@@ -1,25 +1,54 @@
 module.exports = {
   name: "مح",
-  version: "1.5.0",
-  hasPermission: 2,
+  version: "1.5.1",
+  hasPermssion: 2,
   description: "تصفية المجموعة بطريقة سيرا تشان",
   commandCategory: "ادمن",
   cooldowns: 10,
+
   run: async function ({ api, event, args }) {
     const { threadID, senderID, mentions } = event;
-    const AYMAN_ID = "61577861540407";
+    const AYMAN_ID = "61577861540407"; // مطور البوت
     const BOT_ID = api.getCurrentUserID();
-    const exclusions = Object.keys(mentions || {});
+    const exclusions = Object.keys(mentions || {}); // المستثنون من الطرد
 
-    api.getThreadInfo(threadID, async (err, info) => {
-      if (err) return;
-      api.sendMessage("⚠️ سيرا تشان بدأت عملية التطهير..\n──────────────────\nالقطط لا ترحم من يعبث بنظام الزعيم أيمن! 😼💣", threadID);
+    try {
+      const info = await api.getThreadInfo(threadID);
+      const participants = info.participantIDs;
 
-      for (const uid of info.participantIDs) {
+      if (!participants || participants.length === 0)
+        return api.sendMessage("❌ فشل جلب قائمة الأعضاء.", threadID);
+
+      // رسالة البداية
+      await api.sendMessage(
+        "⚠️ سيرا تشان بدأت عملية التطهير..\n──────────────────\n😼 القطط لا ترحم من يعبث بنظام الزعيم أيمن! 💣",
+        threadID
+      );
+
+      let count = 0;
+
+      for (const uid of participants) {
+        // استثناء المطور والبوت والمستخدمين الممنوعين من الطرد
         if (uid === AYMAN_ID || uid === BOT_ID || exclusions.includes(uid)) continue;
-        await new Promise(resolve => setTimeout(resolve, 2000)); 
-        api.removeUserFromGroup(uid, threadID).catch(() => {});
+
+        try {
+          await api.removeUserFromGroup(uid, threadID);
+          count++;
+          // تأخير بسيط 2 ثانية لتجنب حظر البوت
+          await new Promise(resolve => setTimeout(resolve, 2000));
+        } catch (err) {
+          console.error(`❌ فشل طرد العضو: ${uid}`);
+        }
       }
-    });
+
+      return api.sendMessage(
+        `✅ انتهت عملية التطهير!\n💥 تم طرد ${count} عضو.\n🐾 المجموعة الآن تحت حماية سيرا تشان.`,
+        threadID
+      );
+
+    } catch (err) {
+      console.error(err);
+      return api.sendMessage("❌ حدث خطأ أثناء محاولة التطهير. تأكد أنني أدمن في المجموعة.", threadID);
+    }
   }
 };
