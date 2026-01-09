@@ -1,69 +1,85 @@
+const fs = require("fs-extra");
+const path = require("path");
+
+const warnsPath = path.join(__dirname, "cache", "warns.json");
+const blacklistPath = path.join(__dirname, "seraBlacklist.js");
+
+// وظيفة جلب الكلمات المحظورة بأمان
+function getBlacklist() {
+    try {
+        if (fs.existsSync(blacklistPath)) {
+            return require("./seraBlacklist").BLACK || [];
+        }
+        return [];
+    } catch (e) { return []; }
+}
+
+function loadWarns() {
+    if (!fs.existsSync(warnsPath)) fs.outputJsonSync(warnsPath, {});
+    return fs.readJsonSync(warnsPath);
+}
+
+function saveWarns(data) {
+    fs.outputJsonSync(warnsPath, data);
+}
+
 module.exports.config = {
-  name: "درع",
-  version: "4.0.0",
-  hasPermssion: 1, // للأدمن والمطور فقط لتفعيل/إيقاف الدرع
-  credits: "Ayman & Sera",
-  description: "حماية المجموعة من تغيير (الاسم، الصورة، الكنيات، الخلفية)",
-  commandCategory: "حماية",
-  usages: "درع تشغيل / درع ايقاف",
-  cooldowns: 0
+    name: "سبام",
+    version: "7.0.0",
+    hasPermssion: 1,
+    credits: "Ayman & Sera",
+    description: "الرقابة الكارثية - حماية شاملة من السبام والكلمات البذيئة",
+    commandCategory: "حماية",
+    cooldowns: 0
 };
 
-// تخزين حالة الدرع لكل مجموعة
-if (!global.seraShield) global.seraShield = new Map();
+module.exports.handleEvent = async ({ api, event, Users }) => {
+    const { threadID, senderID, body, messageID } = event;
+    if (!body || senderID == api.getCurrentUserID()) return;
 
-module.exports.handleEvent = async function ({ api, event, Threads }) {
-  const { threadID, logMessageType, logMessageData, author } = event;
-  const DEV_ID = "61577861540407"; // أيديك يا زعيم
+    const DEV_ID = "61577861540407"; // أيديك يا زعيم
+    if (senderID === DEV_ID) return;
 
-  // إذا الدرع غير مفعل في هذه المجموعة، لا تفعل شيئاً
-  if (!global.seraShield.get(threadID)) return;
+    // 1. منع تكرار الحروف (تمطيط الكلام المزعج)
+    if (/(.)\1{15,}/.test(body)) {
+        api.unsendMessage(messageID);
+        return api.sendMessage("🤫 سيرا تشان حذفت رسالتك.. بلاش تمطيط كلام!", threadID);
+    }
 
-  // جلب معلومات المجموعة والأدمنية
-  const threadInfo = await api.getThreadInfo(threadID);
-  const adminIDs = threadInfo.adminIDs.map(ad => ad.id);
+    // 2. مكافحة سبام الإيموجي (طرد فوري)
+    const emojis = body.match(/[\u{1F300}-\u{1F9FF}]|[\u{2700}-\u{27BF}]/gu);
+    if (emojis && emojis.length >= 10) {
+        api.removeUserFromGroup(senderID, threadID);
+        return api.sendMessage("🚫 طرد! ممنوع إغراق الشات بالإيموجيات.", threadID);
+    }
 
-  // إذا كان الفاعل هو المطور، البوت، أو أدمن المجموعة -> اسمح له
-  if (author === DEV_ID || author === api.getCurrentUserID() || adminIDs.includes(author)) return;
+    // 3. الرقابة على الكلمات المحظورة
+    const BLACKLIST = getBlacklist();
+    const cleanBody = body.toLowerCase().replace(/\s+/g, '');
+    
+    if (BLACKLIST.some(word => cleanBody.includes(word.toLowerCase()))) {
+        let warns = loadWarns();
+        if (!warns[threadID]) warns[threadID] = {};
+        if (!warns[threadID][senderID]) warns[threadID][senderID] = 0;
 
-  // --- 1. حماية اسم المجموعة ---
-  if (logMessageType === "log:thread-name") {
-    api.setTitle(threadInfo.threadName, threadID); // إعادة الاسم القديم
-    api.sendMessage("⚠️ عذراً! لا يمكن تغيير اسم المجموعة إلا بواسطة المسؤولين. ✨", threadID);
-  }
+        warns[threadID][senderID]++;
+        saveWarns(warns);
 
-  // --- 2. حماية صورة المجموعة ---
-  if (logMessageType === "log:thread-icon") {
-    // ملاحظة: استرجاع الصورة يحتاج لمسار محفوظ مسبقاً، هنا نقوم بمنع التغيير مستقبلاً
-    api.sendMessage("🚫 محاولة تغيير صورة المجموعة! سيرا تشان ترفض العبث بالهوية. 🐾", threadID);
-  }
+        const count = warns[threadID][senderID];
+        const name = await Users.getNameUser(senderID);
 
-  // --- 3. حماية الكنيات (الأسماء المستعارة) ---
-  if (logMessageType === "log:user-nickname") {
-    const { participantID, nickname } = logMessageData;
-    api.setUserNickname(nickname, threadID, participantID); // إلغاء التغيير
-    api.sendMessage("🤫 الكنيات محمية بأمر من الزعيم أيمن! 👑", threadID);
-  }
-
-  // --- 4. حماية لون الدردشة (الخلفية/الثيم) ---
-  if (logMessageType === "log:thread-color") {
-    api.sendMessage("🌈 ممنوع تغيير ألوان الدردشة، حافظوا على النظام! ✨", threadID);
-  }
+        if (count < 3) {
+            api.unsendMessage(messageID);
+            return api.sendMessage(`⚠️ تحذير [ ${count}/3 ] يا ${name}!\n──────────────────\nسيرا تشان لا تسمح بهذه الألفاظ هنا. احترم نفسك! 🐾`, threadID);
+        } else {
+            api.removeUserFromGroup(senderID, threadID);
+            warns[threadID][senderID] = 0;
+            saveWarns(warns);
+            return api.sendMessage(`🚀 تم نفي ${name} خارج المجموعة لتجاوزه التحذيرات!`, threadID);
+        }
+    }
 };
 
-module.exports.run = async function ({ api, event, args }) {
-  const { threadID, messageID } = event;
-  const action = args[0];
-
-  if (action === "تشغيل") {
-    global.seraShield.set(threadID, true);
-    return api.sendMessage("🛡️ تم تفعيل درع الحماية الكارثي!\n──────────────────\nسيرا تشان تراقب الآن: الاسم، الصورة، الكنيات، والألوان. 🐾✨", threadID, messageID);
-  }
-
-  if (action === "ايقاف") {
-    global.seraShield.set(threadID, false);
-    return api.sendMessage("🔓 تم إيقاف الدرع.. المجموعة الآن بدون حماية تلقائية.", threadID, messageID);
-  }
-
-  return api.sendMessage("❓ استخدم: درع تشغيل / درع ايقاف", threadID, messageID);
+module.exports.run = async ({ api, event }) => {
+    return api.sendMessage("🛡️ درع سيرا الكارثي نشط الآن لحمايتكم من التشويش والسبام.", event.threadID);
 };
