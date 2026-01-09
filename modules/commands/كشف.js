@@ -1,71 +1,68 @@
+const fs = require("fs-extra");
+const path = require("path");
+
+// ملف لحفظ المكتمين ليكون الكتم دائم حتى بعد إعادة تشغيل البوت
+const mutedPath = path.join(__dirname, "cache/seraMuted.json");
+if (!fs.existsSync(mutedPath)) fs.writeFileSync(mutedPath, JSON.stringify([]));
+let globalMuted = JSON.parse(fs.readFileSync(mutedPath, "utf-8"));
+if (!global.seraMuted) global.seraMuted = globalMuted;
+
 module.exports.config = {
-  name: "كشف",
-  version: "1.0.0",
-  hasPermssion: 1, // للأدمن والمطور
-  credits: "Ayman & Sera",
-  description: "كشف الملوك (الأكثر تفاعلاً) والأصنام (الخاملين)",
+  name: "كتم",
+  version: "1.1.0",
+  hasPermssion: 1,
+  credits: "Ayman",
+  description: "كتم عضو ومنعه من الكلام (حذف رسائله تلقائياً)",
   commandCategory: "إدارة",
-  cooldowns: 10
+  cooldowns: 0
 };
 
-module.exports.run = async ({ api, event, Users, Threads }) => {
-  const { threadID, messageID } = event;
+// حذف رسائل العضو المكتم فوراً
+module.exports.handleEvent = async ({ api, event }) => {
+  const { senderID, messageID } = event;
+  if (!senderID || !messageID) return;
 
-  try {
-    api.sendMessage("📊 جاري فحص سجلات المجموعة وتحليل البيانات.. ثواني يا زعيم ✨", threadID, messageID);
-
-    const threadInfo = await api.getThreadInfo(threadID);
-    const threadData = await Threads.getData(threadID);
-    const members = threadInfo.participantIDs;
-    
-    // الحصول على إحصائيات الرسائل من قاعدة بيانات البوت
-    const storage = threadData.threadInfo.totalMsgDict || {};
-    
-    let stats = [];
-    for (const id of members) {
-      const name = await Users.getNameUser(id);
-      const count = storage[id] || 0;
-      stats.push({ id, name, count });
+  if (global.seraMuted.includes(senderID)) {
+    try {
+      await api.unsendMessage(messageID);
+      console.log(`🟢 تم حذف رسالة العضو المكتم: ${senderID}`);
+    } catch (err) {
+      console.error(`❌ فشل حذف رسالة العضو ${senderID}: ${err.message}`);
     }
-
-    // ترتيب الأعضاء حسب عدد الرسائل
-    stats.sort((a, b) => b.count - a.count);
-
-    // 1. استخراج الملوك (أول 5)
-    let topActive = "🏆 مـلـوك الـتـفـاعـل (Top 5):\n──────────────────\n";
-    for (let i = 0; i < Math.min(5, stats.length); i++) {
-      topActive += `${i + 1}. ${stats[i].name} -> [ ${stats[i].count} رسالة ]\n`;
-    }
-
-    // 2. استخراج الأصنام (الذين لديهم 0 رسائل في السجل)
-    let ghosts = stats.filter(user => user.count === 0);
-    let ghostList = "👻 قـائـمـة الأصـنـام (الخاملين):\n──────────────────\n";
-    
-    if (ghosts.length === 0) {
-      ghostList += "لا يوجد أصنام، الكل يتفاعل! ✅";
-    } else {
-      // عرض أول 10 أصنام فقط لكي لا تطول الرسالة
-      for (let i = 0; i < Math.min(10, ghosts.length); i++) {
-        ghostList += `• ${ghosts[i].name}\n`;
-      }
-      if (ghosts.length > 10) ghostList += `... و ${ghosts.length - 10} آخرين.`;
-    }
-
-    const report = `
-📊 تـقـريـر الـحـالـة لـلـمـجـمـوعة
-──────────────────
-👥 عدد الأعضاء: ${members.length}
-${topActive}
-──────────────────
-${ghostList}
-──────────────────
-💡 نـصـيـحـة أيـمـن: "الـتـفـاعـل أسـاس الـبـقـاء" 🐾
-    `;
-
-    return api.sendMessage(report, threadID, messageID);
-
-  } catch (e) {
-    console.log(e);
-    return api.sendMessage("❌ فشلت سيرا في جلب التقرير، تأكد من وجود بيانات تفاعل مسجلة.", threadID, messageID);
   }
+};
+
+// أوامر الكتم وفكه
+module.exports.run = async ({ api, event, args }) => {
+  const { threadID, messageReply, mentions, type } = event;
+
+  // تحديد العضو المستهدف: رد أو تاغ
+  let targetID = null;
+  if (type === "message_reply" && messageReply) targetID = messageReply.senderID;
+  else if (mentions && Object.keys(mentions).length > 0) targetID = Object.keys(mentions)[0];
+
+  // أمر فك الكتم
+  if (args[0] && args[0].toLowerCase() === "فك") {
+    if (!targetID) return api.sendMessage("👤 منشن الشخص أو رد على رسالته لفك الكتم.", threadID);
+    global.seraMuted = global.seraMuted.filter(id => id !== targetID);
+    fs.writeFileSync(mutedPath, JSON.stringify(global.seraMuted, null, 2));
+    return api.sendMessage(
+      `🔓 تم فك الكتم بنجاح!\n✅ العضو يمكنه الآن إرسال الرسائل.\n──────────────────\n🐾 بواسطة سيرا تشان`,
+      threadID
+    );
+  }
+
+  // إذا لم يُحدد العضو
+  if (!targetID) return api.sendMessage("👤 منشن الشخص أو رد على رسالته لكتمه.", threadID);
+
+  // إضافة العضو للكتم إذا لم يكن موجوداً
+  if (!global.seraMuted.includes(targetID)) {
+    global.seraMuted.push(targetID);
+    fs.writeFileSync(mutedPath, JSON.stringify(global.seraMuted, null, 2));
+  }
+
+  return api.sendMessage(
+    `🤫 تم كتم العضو بنجاح!\n──────────────────\n📛 أي رسالة يرسلها سيتم حذفها تلقائياً بواسطة سيرا تشان.\n🐾 احترس!`,
+    threadID
+  );
 };
