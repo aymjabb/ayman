@@ -1,83 +1,85 @@
 const axios = require("axios");
 const fs = require("fs-extra");
 const path = require("path");
-const FormData = require("form-data");
 
-// مفتاح Gemini الخاص بك
-const GEMINI_KEY = "AIzaSyALQBlieI5xur3yh0tT69MY36e353tBjuA";
+// smart canvas loader
+let createCanvas, loadImage;
+try {
+  const canvas = require("canvas");
+  createCanvas = canvas.createCanvas;
+  loadImage = canvas.loadImage;
+} catch (e) {
+  const napi = require("@napi-rs/canvas");
+  createCanvas = napi.createCanvas;
+  loadImage = napi.loadImage;
+}
 
 module.exports.config = {
-  name: "تعديل",
-  version: "2.5.0",
+  name: "تغير",
+  version: "1.1.0",
   hasPermssion: 0,
-  credits: "Ayman & Sera",
-  description: "تحويل وتحسين الصور (أنمي / كرتون / جودة عالية)",
-  commandCategory: "صور",
-  usages: "رد على صورة واكتب (أنمي أو كرتون أو تحسين)",
-  cooldowns: 10
+  credits: "SOMI",
+  description: "تغيير خلفية الصورة (مع fallback تلقائي)",
+  commandCategory: "🖼️ صور",
+  usages: "خلفية <وصف>",
+  cooldowns: 15
 };
 
 module.exports.run = async function ({ api, event, args }) {
-  const { threadID, messageID, messageReply } = event;
-
   try {
-    // 1. التحقق من وجود صورة
-    if (!messageReply || !messageReply.attachments || messageReply.attachments[0].type !== "photo") {
-      return api.sendMessage("🌸 يا هلا! رد على صورة أولاً واكتب نوع التعديل (أنمي، كرتون، تحسين).", threadID, messageID);
-    }
+    if (!event.messageReply || !event.messageReply.attachments?.[0])
+      return api.sendMessage(
+        "❌ رد على صورة واكتب:\nخلفية علم العراق",
+        event.threadID,
+        event.messageID
+      );
 
-    const type = args[0];
-    const supportedTypes = ["أنمي", "انمي", "كرتون", "تحسين"];
-    
-    if (!type || !supportedTypes.some(t => type.includes(t))) {
-      return api.sendMessage("✨ حدد نوع التعديل يا بطل: (أنمي / كرتون / تحسين)", threadID, messageID);
-    }
+    const query = args.join(" ");
+    if (!query)
+      return api.sendMessage("❌ اكتب وصف الخلفية", event.threadID);
 
-    const imgUrl = messageReply.attachments[0].url;
-    const imgPath = path.join(__dirname, "cache", `${Date.now()}_in.jpg`);
-    const outPath = path.join(__dirname, "cache", `${Date.now()}_out.jpg`);
+    const imgUrl = event.messageReply.attachments[0].url;
 
-    // إشعار المستخدم بالبدء
-    api.sendMessage("⏳ سيرا تشان بدأت العمل على صورتك.. لحظات فقط ✨", threadID, messageID);
+    const userImg = path.join(__dirname, `/cache/user.png`);
+    const outImg = path.join(__dirname, `/cache/out.png`);
 
-    // 2. تحميل الصورة
-    const response = await axios.get(imgUrl, { responseType: "arraybuffer" });
-    fs.outputFileSync(imgPath, Buffer.from(response.data));
+    // download user image
+    const img = await axios.get(imgUrl, { responseType: "arraybuffer" });
+    fs.writeFileSync(userImg, img.data);
 
-    let apiUrl = "";
-    
-    // 3. تحديد الرابط بناءً على النوع (استخدام سيرفرات معالجة الصور)
-    if (type.includes("أنمي") || type.includes("انمي")) {
-      apiUrl = `https://api.zahwazein.xyz/photoeditor/anime?apikey=${GEMINI_KEY}`; 
-    } else if (type.includes("كرتون")) {
-      apiUrl = `https://api.zahwazein.xyz/photoeditor/cartoon?apikey=${GEMINI_KEY}`;
-    } else if (type.includes("تحسين")) {
-      apiUrl = `https://api.zahwazein.xyz/photoeditor/enhance?apikey=${GEMINI_KEY}`;
-    }
+    // background from Unsplash
+    const bgUrl = `https://source.unsplash.com/800x800/?${encodeURIComponent(query)}`;
+    const bg = await loadImage(bgUrl);
+    const person = await loadImage(userImg);
 
-    // 4. إرسال الصورة للمعالجة
-    const form = new FormData();
-    form.append("image", fs.createReadStream(imgPath));
+    const canvas = createCanvas(bg.width, bg.height);
+    const ctx = canvas.getContext("2d");
 
-    const res = await axios.post(apiUrl, form, {
-      headers: form.getHeaders(),
-      responseType: "arraybuffer"
-    });
+    ctx.drawImage(bg, 0, 0);
+    ctx.drawImage(
+      person,
+      bg.width * 0.25,
+      bg.height * 0.15,
+      bg.width * 0.5,
+      bg.height * 0.7
+    );
 
-    // 5. حفظ النتيجة وإرسالها
-    fs.writeFileSync(outPath, Buffer.from(res.data));
+    fs.writeFileSync(outImg, canvas.toBuffer("image/png"));
 
-    return api.sendMessage({
-      body: `✨ تم التعديل بنجاح! \n🎨 النوع: ${type}\n──────────────────\n🐾 بـقـوة سـيـرا تـشـان`,
-      attachment: fs.createReadStream(outPath)
-    }, threadID, () => {
-      if (fs.existsSync(imgPath)) fs.unlinkSync(imgPath);
-      if (fs.existsSync(outPath)) fs.unlinkSync(outPath);
-    }, messageID);
+    api.sendMessage(
+      {
+        body: `✨ تم تغيير الخلفية: ${query}`,
+        attachment: fs.createReadStream(outImg)
+      },
+      event.threadID,
+      () => {
+        fs.unlinkSync(userImg);
+        fs.unlinkSync(outImg);
+      }
+    );
 
   } catch (err) {
     console.error(err);
-    // إذا فشل الـ API الخارجي، نحاول استخدام Gemini للتحليل النصي كبديل
-    return api.sendMessage("⚠️ المعذرة، السيرفر مشغول حالياً أو الصورة غير مدعومة. جرب مرة أخرى لاحقاً 🌸", threadID, messageID);
+    api.sendMessage("⚠️ فشل تغيير الخلفية", event.threadID);
   }
 };
