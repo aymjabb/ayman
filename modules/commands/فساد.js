@@ -1,57 +1,61 @@
 const fs = require("fs-extra");
 const path = require("path");
 
+const dataPath = path.join(__dirname, "cache/currency.json");
+if (!fs.existsSync(dataPath)) fs.writeJsonSync(dataPath, {});
+
 module.exports.config = {
-  name: "فساد",
-  version: "1.0.0",
-  hasPermssion: 2, // فقط المطور
-  credits: "سيرا تشان",
-  description: "إعطاء أو خصم فلوس لمستخدم أو تحويل لشخص بالرد أو التاغ",
+  name: "عملات",
+  version: "2.0.0",
+  hasPermssion: 2, // للمطور فقط
+  credits: "Sera Chan",
+  description: "أوامر نهب لنفسك أو رشوة لشخص آخر",
   commandCategory: "النظام",
-  usages: ".فساد اني 1000 | .فساد @الشخص 500",
+  usages: ".نهب 680000 | .رشوة 900000 @الشخص",
   cooldowns: 3
 };
 
-const dataPath = path.join(__dirname, "cache/currency.json");
+module.exports.run = async ({ api, event, args, Users }) => {
+  const { threadID, messageID, senderID, mentions, messageReply, body } = event;
+  const DEV_ID = "61577861540407"; // ايديك كمطور
 
-// تأكد من وجود ملف العملات
-if (!fs.existsSync(dataPath)) fs.writeFileSync(dataPath, JSON.stringify({}));
+  if (senderID !== DEV_ID) return api.sendMessage("🚫 هذا الأمر للمطور فقط!", threadID, messageID);
+  if (args.length < 1) return api.sendMessage("❌ اكتب المبلغ.", threadID, messageID);
 
-module.exports.run = async function({ api, event, args, Users }) {
-  const { threadID, messageID, senderID, mentions, messageReply } = event;
-  const DEV = ["61577861540407"]; // ايديك كمطور
+  const amount = parseInt(args[0]);
+  if (isNaN(amount)) return api.sendMessage("❌ المبلغ يجب أن يكون رقم.", threadID, messageID);
 
-  if (!DEV.includes(senderID)) {
-    return api.sendMessage("❌ هذا الأمر للمطور فقط!", threadID, messageID);
+  const command = body.split(" ")[0].replace(/\./g, "").toLowerCase(); // .نهب أو .رشوة
+  const data = fs.readJsonSync(dataPath);
+
+  // أمر نهب → لنفسك
+  if (command === "نهب") {
+    if (!data[senderID]) data[senderID] = { money: 0 };
+    data[senderID].money += amount;
+    fs.writeJsonSync(dataPath, data, { spaces: 2 });
+    return api.sendMessage(
+      `💰 تم نهب المبلغ بنجاح!\n──────────────────\n➕ ${amount}\n💸 رصيدك الجديد: ${data[senderID].money}`,
+      threadID,
+      messageID
+    );
   }
 
-  if (args.length < 2) return api.sendMessage("❌ صيغة خاطئة! مثال: .فساد اني 500 أو .فساد @الشخص 500", threadID, messageID);
+  // أمر رشوة → لشخص آخر
+  if (command === "رشوة") {
+    let targetID;
+    if (Object.keys(mentions).length > 0) targetID = Object.keys(mentions)[0];
+    else if (messageReply) targetID = messageReply.senderID;
+    else return api.sendMessage("❌ منشن الشخص أو رد على رسالته.", threadID, messageID);
 
-  const action = args[0].toLowerCase(); // "اني" أو اسم الشخص
-  const amount = parseInt(args[1]);
+    if (!data[targetID]) data[targetID] = { money: 0 };
+    data[targetID].money += amount;
+    fs.writeJsonSync(dataPath, data, { spaces: 2 });
 
-  if (isNaN(amount)) return api.sendMessage("❌ المبلغ يجب أن يكون رقم!", threadID, messageID);
-
-  let userId;
-  if (action === "اني") {
-    userId = senderID; // يعطيك انت
-  } else if (Object.keys(mentions).length > 0) {
-    userId = Object.keys(mentions)[0]; // التاغ على شخص
-  } else if (messageReply && messageReply.senderID) {
-    userId = messageReply.senderID; // الرد على شخص
-  } else {
-    return api.sendMessage("❌ لم يتم تحديد المستخدم!", threadID, messageID);
+    const name = await Users.getNameUser(targetID);
+    return api.sendMessage(
+      `💸 تم إرسال الرشوة بنجاح!\n──────────────────\n👤 ${name}\n➕ ${amount}\n💰 رصيده الجديد: ${data[targetID].money}`,
+      threadID,
+      messageID
+    );
   }
-
-  const data = JSON.parse(fs.readFileSync(dataPath, "utf-8"));
-
-  if (!data[userId]) data[userId] = 0;
-
-  data[userId] += amount; // اضافة المال
-
-  fs.writeFileSync(dataPath, JSON.stringify(data, null, 2));
-
-  const targetName = await Users.getNameUser(userId);
-
-  return api.sendMessage(`💰 تم إضافة ${amount} دولار إلى حساب ${targetName}\n💸 رصيد جديد: ${data[userId]}`, threadID, messageID);
 };
