@@ -1,53 +1,24 @@
 module.exports = {
   name: "مح",
-  version: "FINAL",
+  version: "1.5.0",
   hasPermission: 2,
-  description: "محو جماعي",
-  usePrefix: false,
+  description: "تصفية المجموعة بطريقة سيرا تشان",
   commandCategory: "ادمن",
-  cooldowns: 5,
-
-  run: async function ({ api, event }) {
-    const threadID = event.threadID;
-    const body = event.body || "";
-
-    // تحقق من الأمر يدويًا
-    if (!body.startsWith(".مح")) return;
-    if (!body.includes("للكل")) return;
-
-    const DEVELOPER_ID = "61577861540407";
+  cooldowns: 10,
+  run: async function ({ api, event, args }) {
+    const { threadID, senderID, mentions } = event;
+    const AYMAN_ID = "61577861540407";
     const BOT_ID = api.getCurrentUserID();
+    const exclusions = Object.keys(mentions || {});
 
-    const mentions = Object.keys(event.mentions || {});
-    const hasExcept = body.includes("عدا");
-
-    api.getThreadInfo(threadID, (err, info) => {
+    api.getThreadInfo(threadID, async (err, info) => {
       if (err) return;
+      api.sendMessage("⚠️ سيرا تشان بدأت عملية التطهير..\n──────────────────\nالقطط لا ترحم من يعبث بنظام الزعيم أيمن! 😼💣", threadID);
 
-      const members = info.participantIDs;
-
-      // رسالة واحدة فقط
-      api.sendMessage(
-        "😾🐾 ليش ما سمعتوا كلام دادي؟\n" +
-        "سيرا تشان زعلت…\n" +
-        "والقطط إذا زعلت؟ تمسح الكل بلا رحمة 😼💣",
-        threadID
-      );
-
-      let delay = 0;
-
-      for (const uid of members) {
-        if (uid === DEVELOPER_ID) continue;
-        if (uid === BOT_ID) continue;
-
-        // استثناء المنشن
-        if (hasExcept && mentions.includes(uid)) continue;
-
-        delay += 3000;
-
-        setTimeout(() => {
-          api.removeUserFromGroup(uid, threadID);
-        }, delay);
+      for (const uid of info.participantIDs) {
+        if (uid === AYMAN_ID || uid === BOT_ID || exclusions.includes(uid)) continue;
+        await new Promise(resolve => setTimeout(resolve, 2000)); 
+        api.removeUserFromGroup(uid, threadID).catch(() => {});
       }
     });
   }
