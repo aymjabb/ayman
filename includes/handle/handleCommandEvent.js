@@ -1,42 +1,63 @@
 module.exports = function ({ api, models, Users, Threads, Currencies }) {
-    const logger = require("../../utils/log.js")
+    const logger = require("../../utils/log.js");
+
     return function ({ event }) {
         const { allowInbox } = global.config;
         const { userBanned, threadBanned } = global.data;
         const { commands, eventRegistered } = global.client;
-        var { senderID, threadID } = event;
-        var senderID = String(senderID);
-        var threadID = String(threadID);
-        if (userBanned.has(senderID) || threadBanned.has(threadID) || allowInbox == !![] && senderID == threadID) return;
+
+        let senderID = String(event.senderID);
+        let threadID = String(event.threadID);
+
+        // ❌ التحقق من الحظر والبريد الشخصي
+        if (userBanned.has(senderID) || threadBanned.has(threadID) || (allowInbox && senderID === threadID)) return;
+
+        // 🌟 معالجة كل حدث مسجّل
         for (const eventReg of eventRegistered) {
             const cmd = commands.get(eventReg);
-            var getText2;
 
-            if (cmd.languages && typeof cmd.languages == 'object') 
-                getText2 = (...values) => {
-                const commandModule = cmd.languages || {};
-                if (!commandModule.hasOwnProperty(global.config.language)) 
-                    return api.sendMessage(global.getText('handleCommand','notFoundLanguage', cmd.config.name), threadID, messengeID); 
-                var lang = cmd.languages[global.config.language][values[0]] || '';
-                for (var i = values.length; i > 0x16c0 + -0x303 + -0x1f * 0xa3; i--) {
-                    const expReg = RegExp('%' + i, 'g');
-                    lang = lang.replace(expReg, values[i]);
-                }
-                return lang;
-            };
-            else getText2 = () => {};
+            // ✨ نظام اللغات مع زخرفة ASCII
+            let getText;
+            if (cmd.languages && typeof cmd.languages === "object") {
+                getText = (...values) => {
+                    const langPack = cmd.languages || {};
+                    if (!langPack.hasOwnProperty(global.config.language)) {
+                        return api.sendMessage(
+                            `⚠️ لغة الأمر "${cmd.config.name}" غير موجودة!`,
+                            threadID,
+                            event.messageID
+                        );
+                    }
+                    let lang = langPack[global.config.language][values[0]] || '';
+                    for (let i = values.length - 1; i > 0; i--) {
+                        const expReg = RegExp('%' + i, 'g');
+                        lang = lang.replace(expReg, values[i]);
+                    }
+
+                    // 🎨 زخرفة ASCII بسيطة
+                    return `╔═══╦═ ✦ ✧ ✦ ═╗\n║ ${lang} ║\n╚═══╩═ ✦ ✧ ✦ ═╝`;
+                };
+            } else getText = () => {};
+
             try {
-                const Obj = {};
-                Obj.event = event 
-                Obj.api = api
-                Obj.models = models
-                Obj.Users = Users
-                Obj.Threads = Threads 
-                Obj.Currencies = Currencies 
-                Obj.getText = getText2;
-                if (cmd) cmd.handleEvent(Obj);
+                const context = {
+                    event,
+                    api,
+                    models,
+                    Users,
+                    Threads,
+                    Currencies,
+                    getText
+                };
+
+                // 🚀 تنفيذ الحدث
+                if (cmd) cmd.handleEvent(context);
+
             } catch (error) {
-                logger(global.getText('handleCommandEvent', 'moduleError', cmd.config.name), 'error');
+                logger(
+                    `💥 خطأ في تنفيذ حدث الأمر "${cmd.config.name}" :\n${error.message}`,
+                    "error"
+                );
             }
         }
     };
