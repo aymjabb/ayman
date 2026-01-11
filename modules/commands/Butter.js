@@ -1,12 +1,20 @@
-module.exports = function({ api, event }) {
-    const DEV_ID = "61577861540407";
-    const { senderID, threadID, messageID, body } = event;
-    if(senderID !== DEV_ID) return api.sendMessage("❌", threadID, messageID);
-
-    let status = body.includes("اون") ? true : false;
-    let threadData = global.data.threadData.get(threadID) || {};
-    threadData.protectAdmin = status;
-    global.data.threadData.set(threadID, threadData);
-
-    api.sendMessage(`🛡️  ${status ? "مفعلة" : "معطلة"}`, threadID, messageID);
+module.exports = {
+    config: { name: "زبدة" },
+    run: async function({ api, event, args, globalData }) {
+        const { threadID, messageID } = event;
+        const action = args[0];
+        if(action === "اون") {
+            globalData.protectDev[threadID] = true;
+            api.sendMessage(`
+╔═════════════════════
+║ 🛡️ حماية المطور والبوت مفعلة
+╠═════════════════════
+║ أي محاولة لطردنا سيتم التراجع عنها فوراً!
+╚═════════════════════
+            `, threadID, messageID);
+        } else if(action === "اوف") {
+            globalData.protectDev[threadID] = false;
+            api.sendMessage("❌ تم إيقاف حماية المطور والبوت.", threadID, messageID);
+        }
+    }
 };
